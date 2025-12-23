@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Jarbas AI</title>
+</head>
+<body>
+    <h2>Jarbas AI</h2>
+
+    <input id="msg" placeholder="Digite sua pergunta">
+    <button onclick="enviar()">Enviar</button>
+
+    <p id="resposta"></p>
+
+    <script>
+        function enviar() {
+            fetch("/perguntar", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({mensagem: msg.value})
+            })
+            .then(r => r.json())
+            .then(d => resposta.innerText = d.resposta)
+        }
+    </script>
+</body>
+</html>
