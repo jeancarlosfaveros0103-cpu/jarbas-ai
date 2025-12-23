@@ -1,0 +1,59 @@
+body {
+    margin: 0;
+    background: #0f0f0f;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+.chat {
+    max-width: 800px;
+    margin: auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.msg {
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.user {
+    color: #5aa2ff;
+}
+
+.jarbas {
+    color: #aaffaa;
+}
+
+.input-area {
+    display: flex;
+    padding: 15px;
+    border-top: 1px solid #222;
+}
+
+input {
+    flex: 1;
+    padding: 12px;
+    background: #1a1a1a;
+    border: none;
+    color: white;
+    font-size: 16px;
+    outline: none;
+}
+
+button {
+    margin-left: 10px;
+    padding: 12px 20px;
+    background: #5aa2ff;
+    border: none;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
