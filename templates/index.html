@@ -3,43 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <title>Jarbas AI</title>
-    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #343541;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            padding: 15px;
+            text-align: center;
+            background-color: #202123;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #chat {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .msg {
+            max-width: 70%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+
+        .user {
+            background-color: #0b93f6;
+            margin-left: auto;
+        }
+
+        .jarbas {
+            background-color: #444654;
+            margin-right: auto;
+        }
+
+        footer {
+            display: flex;
+            padding: 10px;
+            background-color: #202123;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 6px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+        }
+
+        button {
+            margin-left: 10px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            background-color: #0b93f6;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0077cc;
+        }
+    </style>
 </head>
 <body>
 
-<div class="chat-container">
-    <div class="chat-header">Jarbas AI</div>
+<header>Jarbas AI</header>
 
-    <div class="chat-box" id="chatBox"></div>
+<div id="chat"></div>
 
-    <div class="input-area">
-        <input type="text" id="message" placeholder="Digite sua mensagem..." />
-        <button onclick="sendMessage()">Enviar</button>
-    </div>
-</div>
+<footer>
+    <input id="msg" placeholder="Digite sua mensagem..." autocomplete="off">
+    <button onclick="enviar()">Enviar</button>
+</footer>
 
 <script>
-async function sendMessage() {
-    const input = document.getElementById("message");
-    const chatBox = document.getElementById("chatBox");
+    const chat = document.getElementById("chat");
+    const input = document.getElementById("msg");
 
-    if (!input.value) return;
+    function addMsg(texto, classe) {
+        const div = document.createElement("div");
+        div.className = "msg " + classe;
+        div.innerText = texto;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
 
-    chatBox.innerHTML += `<div class="msg user">${input.value}</div>`;
+    function enviar() {
+        const texto = input.value.trim();
+        if (!texto) return;
 
-    const response = await fetch("/chat", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({message: input.value})
+        addMsg(texto, "user");
+        input.value = "";
+
+        fetch("/perguntar", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ mensagem: texto })
+        })
+        .then(r => r.json())
+        .then(d => {
+            addMsg(d.resposta, "jarbas");
+        })
+        .catch(() => {
+            addMsg("Erro ao falar com o Jarbas.", "jarbas");
+        });
+    }
+
+    input.addEventListener("keydown", e => {
+        if (e.key === "Enter") enviar();
     });
-
-    const data = await response.json();
-
-    chatBox.innerHTML += `<div class="msg bot">${data.reply}</div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    input.value = "";
-}
 </script>
 
 </body>
