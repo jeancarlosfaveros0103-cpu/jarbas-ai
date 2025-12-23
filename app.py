@@ -1,19 +1,17 @@
 from flask import Flask, render_template, request, jsonify
-import jarbas
 
 app = Flask(__name__)
 
 @app.route("/")
-def home():
+def index():
     return render_template("index.html")
 
-@app.route("/perguntar", methods=["POST"])
-def perguntar():
+@app.route("/chat", methods=["POST"])
+def chat():
     data = request.json
-    pergunta = data.get("mensagem", "")
-
-    resposta = jarbas.responder(pergunta)
-    return jsonify({"resposta": resposta})
+    msg = data.get("message", "")
+    resposta = "Jarbas está vivo 😎"  # depois liga com a IA
+    return jsonify({"reply": resposta})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run()
