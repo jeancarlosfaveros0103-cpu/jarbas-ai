@@ -60,7 +60,7 @@ def perguntar_ia(texto):
                 },
                 {"role": "user", "content": texto}
             ],
-            max_tokens=200
+            max_tokens=800
         )
         return resposta.choices[0].message.content.strip()
     except Exception:
@@ -97,4 +97,5 @@ def responder(texto):
     salvar_memoria(memoria)
 
     return resposta
+
 
