@@ -7,30 +7,54 @@
 </head>
 <body>
 
+    <!-- ORB -->
     <div id="orb"></div>
 
+    <!-- CHAT -->
     <div id="chat">
         <input id="msg" placeholder="Fale com o Jarbas...">
         <button onclick="enviar()">➤</button>
     </div>
 
     <script>
+        let vozAlfred = null;
+
+        // Escolhe a melhor voz masculina e natural
+        function carregarVoz() {
+            const vozes = speechSynthesis.getVoices();
+
+            vozAlfred = vozes.find(v =>
+                v.lang === "pt-BR" &&
+                (v.name.toLowerCase().includes("male") ||
+                 v.name.toLowerCase().includes("masc") ||
+                 v.name.toLowerCase().includes("br"))
+            ) || vozes.find(v => v.lang === "pt-BR") || vozes[0];
+        }
+
+        speechSynthesis.onvoiceschanged = carregarVoz;
+
         function falar(texto) {
             const orb = document.getElementById("orb");
             orb.classList.add("pulse");
 
-            const voz = new SpeechSynthesisUtterance(texto);
-            voz.lang = "pt-BR";
+            const fala = new SpeechSynthesisUtterance(texto);
+            fala.lang = "pt-BR";
+            fala.voice = vozAlfred;
 
-            voz.onend = () => {
+            // Ajustes pra ficar estilo Alfred
+            fala.rate = 0.95;   // mais calmo
+            fala.pitch = 0.85;  // mais grave
+            fala.volume = 1;
+
+            fala.onend = () => {
                 orb.classList.remove("pulse");
             };
 
-            speechSynthesis.speak(voz);
+            speechSynthesis.speak(fala);
         }
 
         function enviar() {
-            const texto = msg.value;
+            const texto = msg.value.trim();
             if (!texto) return;
 
             fetch("/perguntar", {
