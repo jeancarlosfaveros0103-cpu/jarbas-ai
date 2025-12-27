@@ -2,81 +2,75 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Jarbas AI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarbas AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 
-    <!-- CSS -->
-  <link rel="stylesheet" href="/static/style.css">  
 <body>
 
-    <!-- ONDAS -->
-    <div id="waves">
-        <span></span>
-        <span></span>
-        <span></span>
+    <div class="container">
+
+        <!-- BOLINHA / ORB -->
+        <div id="orb">
+            <span class="wave w1"></span>
+            <span class="wave w2"></span>
+            <span class="wave w3"></span>
+        </div>
+
+        <!-- CHAT -->
+        <div id="chat">
+            <input 
+                id="msg" 
+                type="text" 
+                placeholder="Fale com o Jarbas..."
+            >
+            <button id="send">➤</button>
+        </div>
+
     </div>
 
-    <!-- BOLINHA CENTRAL -->
-    <div id="orb"></div>
-
-    <!-- CHAT -->
-    <div id="chat">
-        <input 
-            id="msg" 
-            type="text" 
-            placeholder="Fale com o Jarbas..."
-            autocomplete="off"
-        >
-        <button onclick="enviar()">➤</button>
-    </div>
-
-    <!-- SCRIPT -->
     <script>
+        const btn = document.getElementById("send");
+        const input = document.getElementById("msg");
+        const orb = document.getElementById("orb");
+
         function falar(texto) {
-            const orb = document.getElementById("orb");
-            const waves = document.getElementById("waves");
+            orb.classList.add("speaking");
 
-            // ativa animações
-            orb.classList.add("pulse");
-            waves.classList.add("active");
-
-            // voz
             const voz = new SpeechSynthesisUtterance(texto);
             voz.lang = "pt-BR";
-            voz.rate = 0.95;
-            voz.pitch = 0.85;
+            voz.rate = 1;
+            voz.pitch = 0.9;
             voz.volume = 1;
 
-            // quando terminar de falar
             voz.onend = () => {
-                orb.classList.remove("pulse");
-                waves.classList.remove("active");
+                orb.classList.remove("speaking");
             };
 
             speechSynthesis.cancel();
             speechSynthesis.speak(voz);
         }
 
-        function enviar() {
-            const input = document.getElementById("msg");
-            const texto = input.value.trim();
-            if (!texto) return;
+        btn.addEventListener("click", () => {
+            if (input.value.trim() === "") return;
 
-            // RESPOSTA DE TESTE (substitui depois pelo backend)
-            const resposta = "Estou operacional. Como posso ajudar?";
+            // resposta de teste do Jarbas
+            setTimeout(() => {
+                falar(
+                    "Olá. Eu sou o Jarbas. Essas ondas reagem enquanto eu falo com você."
+                );
+            }, 300);
 
-            falar(resposta);
             input.value = "";
-        }
+        });
 
-        // ENTER para enviar
-        document.getElementById("msg").addEventListener("keydown", function(e) {
+        input.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
-                enviar();
+                btn.click();
             }
         });
     </script>
 
 </body>
 </html>
-
