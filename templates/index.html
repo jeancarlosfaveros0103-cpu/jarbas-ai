@@ -3,73 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <title>Jarbas AI</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ORB -->
-    <div id="orb"></div>
+<div id="orb"></div>
 
-    <!-- CHAT -->
-    <div id="chat">
-        <input id="msg" placeholder="Fale com o Jarbas...">
-        <button onclick="enviar()">➤</button>
-    </div>
+<div id="chat">
+    <input id="msg" placeholder="Fale com o Jarbas...">
+    <button onclick="enviar()">➤</button>
+</div>
 
-    <script>
-        let vozAlfred = null;
+<script>
+const orb = document.getElementById("orb");
+const msg = document.getElementById("msg");
 
-        // Escolhe a melhor voz masculina e natural
-        function carregarVoz() {
-            const vozes = speechSynthesis.getVoices();
+let animando = false;
+let frameId = null;
 
-            vozAlfred = vozes.find(v =>
-                v.lang === "pt-BR" &&
-                (v.name.toLowerCase().includes("male") ||
-                 v.name.toLowerCase().includes("masc") ||
-                 v.name.toLowerCase().includes("br"))
-            ) || vozes.find(v => v.lang === "pt-BR") || vozes[0];
-        }
+// 🎧 animação estilo “volume”
+function animarVolume() {
+    if (!animando) return;
 
-        speechSynthesis.onvoiceschanged = carregarVoz;
+    // variação suave (simula intensidade da voz)
+    const volume = 1 + Math.sin(Date.now() / 120) * 0.15 + Math.random() * 0.05;
+    orb.style.transform = `scale(${volume})`;
 
-        function falar(texto) {
-            const orb = document.getElementById("orb");
-            orb.classList.add("pulse");
+    frameId = requestAnimationFrame(animarVolume);
+}
 
-            const fala = new SpeechSynthesisUtterance(texto);
-            fala.lang = "pt-BR";
-            fala.voice = vozAlfred;
+function falar(texto) {
+    if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+    }
 
-            // Ajustes pra ficar estilo Alfred
-            fala.rate = 0.95;   // mais calmo
-            fala.pitch = 0.85;  // mais grave
-            fala.volume = 1;
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "pt-BR";
+    voz.rate = 0.95;
+    voz.pitch = 0.85;
 
-            fala.onend = () => {
-                orb.classList.remove("pulse");
-            };
+    voz.onstart = () => {
+        animando = true;
+        animarVolume();
+    };
 
-            speechSynthesis.speak(fala);
-        }
+    voz.onend = () => {
+        animando = false;
+        cancelAnimationFrame(frameId);
+        orb.style.transform = "scale(1)";
+    };
 
-        function enviar() {
-            const texto = msg.value.trim();
-            if (!texto) return;
+    speechSynthesis.speak(voz);
+}
 
-            fetch("/perguntar", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mensagem: texto })
-            })
-            .then(r => r.json())
-            .then(d => {
-                falar(d.resposta);
-            });
+function enviar() {
+    const texto = msg.value.trim();
+    if (!texto) return;
 
-            msg.value = "";
-        }
-    </script>
+    // resposta local (backend entra depois)
+    falar("Mensagem recebida. Estou processando sua solicitação.");
+
+    msg.value = "";
+}
+
+// fala inicial
+setTimeout(() => {
+    falar("Jarbas inicializado. Pronto para interagir.");
+}, 700);
+</script>
 
 </body>
 </html>
