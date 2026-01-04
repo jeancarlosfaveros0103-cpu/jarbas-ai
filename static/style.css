@@ -4,13 +4,13 @@
 
 body {
     margin: 0;
-    background: #0b0b0b;
-    color: white;
-    font-family: Arial, Helvetica, sans-serif;
     height: 100vh;
+    background: #0b0b0f;
+    color: white;
+    font-family: Arial, sans-serif;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 }
 
 #container {
@@ -19,85 +19,92 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 15px;
+    align-items: center;
+    padding: 20px;
+}
+
+#orb-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin-top: 30px;
 }
 
 #orb {
-    width: 110px;
-    height: 110px;
-    margin: 0 auto 15px;
+    width: 90px;
+    height: 90px;
+    background: radial-gradient(circle, #4da6ff, #0059ff);
     border-radius: 50%;
-    background: radial-gradient(circle at top, #5dbbff, #0051ff);
-    box-shadow: 0 0 30px rgba(0, 120, 255, 0.6);
-    transition: transform 0.3s ease;
+    position: absolute;
+    top: 35px;
+    left: 35px;
+    z-index: 2;
+    transition: transform 0.2s;
 }
 
-.pulse {
-    animation: pulse 1s infinite;
+#orb.active {
+    transform: scale(1.1);
 }
 
-@keyframes pulse {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.12); }
-    100% { transform: scale(1); }
+.wave {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 2px solid rgba(77,166,255,0.5);
+    border-radius: 50%;
+    opacity: 0;
+}
+
+.wave.active {
+    animation: wave 1.5s infinite;
+}
+
+.wave:nth-child(1) { animation-delay: 0s; }
+.wave:nth-child(2) { animation-delay: 0.5s; }
+.wave:nth-child(3) { animation-delay: 1s; }
+
+@keyframes wave {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
 }
 
 #chat-box {
     flex: 1;
-    background: #111;
-    border-radius: 10px;
-    padding: 10px;
+    width: 100%;
+    margin-top: 30px;
+    background: #12121a;
+    border-radius: 12px;
+    padding: 15px;
     overflow-y: auto;
-    margin-bottom: 10px;
-}
-
-#messages {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.user {
-    align-self: flex-end;
-    background: #0051ff;
-    padding: 8px 12px;
-    border-radius: 12px 12px 0 12px;
-    max-width: 80%;
-}
-
-.bot {
-    align-self: flex-start;
-    background: #1f1f1f;
-    padding: 8px 12px;
-    border-radius: 12px 12px 12px 0;
-    max-width: 80%;
-    white-space: pre-wrap;
+    font-size: 16px;
 }
 
 #input-area {
+    width: 100%;
     display: flex;
-    gap: 8px;
+    gap: 10px;
+    margin-top: 15px;
 }
 
-#msg {
+#input-area input {
     flex: 1;
     padding: 12px;
     border-radius: 8px;
     border: none;
-    font-size: 15px;
-    outline: none;
+    font-size: 16px;
 }
 
-button {
-    padding: 12px 16px;
+#input-area button {
+    padding: 12px 18px;
     border-radius: 8px;
     border: none;
-    background: #0051ff;
+    background: #0059ff;
     color: white;
-    font-size: 15px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #003dcc;
+    font-size: 16px;
 }
