@@ -1,92 +1,84 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <title>Jarbas AI</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
 <div id="container">
 
-    <div id="orb"></div>
-
-    <div id="chat-box">
-        <div id="messages"></div>
+    <!-- BOLINHA COM ONDAS -->
+    <div id="orb-container">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div id="orb"></div>
     </div>
 
+    <!-- CHAT BOX -->
+    <div id="chat-box">
+        <div id="resposta"></div>
+    </div>
+
+    <!-- INPUT -->
     <div id="input-area">
-        <input id="msg" placeholder="Fale com o Jarbas..." autocomplete="off">
+        <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
         <button onclick="enviar()">Enviar</button>
     </div>
 
 </div>
 
 <script>
-let falando = false;
+const respostaDiv = document.getElementById("resposta");
+const orb = document.getElementById("orb");
+const waves = document.querySelectorAll(".wave");
 
+// FUNÇÃO DE VOZ
 function falar(texto) {
-    const orb = document.getElementById("orb");
-    orb.classList.add("pulse");
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "pt-BR";
 
-    const utter = new SpeechSynthesisUtterance(texto);
-    utter.lang = "pt-BR";
-    utter.rate = 0.95;
-    utter.pitch = 0.9;
+    orb.classList.add("active");
+    waves.forEach(w => w.classList.add("active"));
 
-    utter.onend = () => {
-        orb.classList.remove("pulse");
-        falando = false;
+    voz.onend = () => {
+        orb.classList.remove("active");
+        waves.forEach(w => w.classList.remove("active"));
     };
 
-    speechSynthesis.speak(utter);
+    speechSynthesis.speak(voz);
 }
 
+// FUNÇÃO PARA ESCREVER LETRA POR LETRA
 function escreverLetraPorLetra(texto) {
-    const messages = document.getElementById("messages");
-    const div = document.createElement("div");
-    div.className = "bot";
-    messages.appendChild(div);
-
+    respostaDiv.innerHTML = "";
     let i = 0;
-    falando = true;
-
-    function escrever() {
-        if (i < texto.length) {
-            div.innerHTML += texto.charAt(i);
-            i++;
-            messages.scrollTop = messages.scrollHeight;
-            setTimeout(escrever, 30);
-        } else {
-            falar(texto);
-        }
-    }
-    escrever();
+    const intervalo = setInterval(() => {
+        respostaDiv.innerHTML += texto[i];
+        i++;
+        if (i >= texto.length) clearInterval(intervalo);
+    }, 40);
 }
 
+// FUNÇÃO PARA ENVIAR MENSAGEM
 function enviar() {
-    const input = document.getElementById("msg");
-    const texto = input.value.trim();
-    if (!texto || falando) return;
-
-    const messages = document.getElementById("messages");
-
-    const userDiv = document.createElement("div");
-    userDiv.className = "user";
-    userDiv.innerText = texto;
-    messages.appendChild(userDiv);
-
-    input.value = "";
+    const texto = msg.value.trim();
+    if (!texto) return;
 
     fetch("/perguntar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mensagem: texto })
     })
-    .then(res => res.json())
-    .then(data => {
-        escreverLetraPorLetra(data.resposta);
+    .then(r => r.json())
+    .then(d => {
+        escreverLetraPorLetra(d.resposta);
+        falar(d.resposta);
     });
+
+    msg.value = "";
 }
 </script>
 
