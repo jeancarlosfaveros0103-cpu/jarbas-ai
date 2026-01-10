@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Jarbas AI</title>
+  <title>Jarbas AI - Login</title>
   <style>
     body {
       margin: 0;
@@ -11,89 +11,59 @@
       color: white;
       font-family: Arial, sans-serif;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
     }
 
-    #status {
-      margin-bottom: 20px;
-      opacity: 0.7;
-      font-size: 18px;
-    }
-
-    #texto {
-      width: 90%;
-      max-width: 500px;
-      min-height: 120px;
-      padding: 15px;
-      border-radius: 10px;
+    .box {
       background: #1a1a1a;
-      font-size: 18px;
-      margin-bottom: 20px;
+      padding: 30px;
+      border-radius: 12px;
+      width: 300px;
+      text-align: center;
     }
 
-    #ativar {
-      padding: 12px 20px;
-      font-size: 16px;
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
       border: none;
-      border-radius: 8px;
-      background: #c9a25d; /* rose gold */
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: none;
+      background: #d4a85f;
       color: black;
+      font-weight: bold;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <div id="status">Jarbas aguardando...</div>
-  <div id="texto"></div>
-  <button id="ativar">Ativar Jarbas</button>
+  <div class="box">
+    <h2>Jarbas AI</h2>
+    <p>Quem está entrando?</p>
+    <input id="nome" placeholder="Seu nome">
+    <button onclick="entrar()">Entrar</button>
+  </div>
 
   <script>
-    const status = document.getElementById("status");
-    const texto = document.getElementById("texto");
-    const btn = document.getElementById("ativar");
+    function entrar() {
+      const nome = document.getElementById("nome").value.trim();
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!nome) {
+        alert("Digite seu nome");
+        return;
+      }
 
-    if (!SpeechRecognition) {
-      status.innerText = "Seu navegador não suporta reconhecimento de voz.";
-      btn.style.display = "none";
-    } else {
-      const rec = new SpeechRecognition();
-      rec.lang = "pt-BR";
-      rec.continuous = true;
-      rec.interimResults = true;
-
-      rec.onstart = () => {
-        status.innerText = "🎤 Jarbas ouvindo você...";
-        btn.style.display = "none";
-      };
-
-      rec.onend = () => {
-        rec.start(); // reinicia automaticamente
-      };
-
-      rec.onresult = (event) => {
-        let final = "";
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const res = event.results[i];
-          if (res.isFinal) {
-            final += res[0].transcript + " ";
-          }
-        }
-
-        if (final) {
-          texto.innerText += final;
-        }
-      };
-
-      btn.onclick = () => {
-        rec.start(); // aqui o navegador pede permissão do microfone
-      };
+      localStorage.setItem("usuario", nome);
+      window.location.href = "jarbas.html";
     }
   </script>
 
