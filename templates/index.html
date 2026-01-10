@@ -1,171 +1,86 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Jarbas AI</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      background: radial-gradient(circle at top, #1a1a1a, #050505);
-      color: white;
-      font-family: 'Inter', Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .card {
-      width: 340px;
-      padding: 30px;
-      border-radius: 18px;
-      background: rgba(20,20,20,0.9);
-      box-shadow: 0 0 40px rgba(0,0,0,0.6);
-      text-align: center;
-      animation: fade 0.5s ease;
-    }
-
-    @keyframes fade {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    h2 { margin-top: 0; }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      margin-top: 10px;
-      font-size: 15px;
-      outline: none;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 14px;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      background: linear-gradient(135deg, #d9a85b, #b8873f);
-      color: #000;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 15px rgba(217,168,91,0.4);
-    }
-
-    #jarbas {
-      display: none;
-      width: 90%;
-      max-width: 600px;
-      height: 70vh;
-      padding: 25px;
-      border-radius: 18px;
-      background: rgba(20,20,20,0.9);
-      box-shadow: 0 0 40px rgba(0,0,0,0.6);
-      display: flex;
-      flex-direction: column;
-    }
-
-    #status {
-      opacity: 0.7;
-      margin-bottom: 10px;
-    }
-
-    #texto {
-      flex: 1;
-      padding: 15px;
-      border-radius: 10px;
-      background: #141414;
-      overflow-y: auto;
-      font-size: 16px;
-    }
-
-    #ativar {
-      margin-top: 12px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Jarbas AI</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-  <!-- LOGIN -->
-  <div id="login" class="card">
-    <h2>Jarbas AI</h2>
-    <p>Quem está entrando?</p>
-    <input id="nome" placeholder="Digite seu nome">
-    <button onclick="entrar()">Entrar</button>
-  </div>
+<div id="container">
 
-  <!-- JARBAS -->
-  <div id="jarbas">
-    <div id="status">Jarbas aguardando...</div>
-    <div id="texto"></div>
-    <button id="ativar">Ativar Jarbas</button>
-  </div>
+    <!-- BOLINHA COM ONDAS -->
+    <div id="orb-container">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div id="orb"></div>
+    </div>
 
-  <script>
-    const login = document.getElementById("login");
-    const jarbas = document.getElementById("jarbas");
-    const status = document.getElementById("status");
-    const texto = document.getElementById("texto");
-    const btn = document.getElementById("ativar");
+    <!-- CHAT BOX -->
+    <div id="chat-box">
+        <div id="resposta"></div>
+    </div>
 
-    function entrar() {
-      const nome = document.getElementById("nome").value.trim();
-      if (!nome) return;
+    <!-- INPUT -->
+    <div id="input-area">
+        <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
+        <button onclick="enviar()">Enviar</button>
+    </div>
 
-      localStorage.setItem("usuario", nome);
+</div>
 
-      login.style.display = "none";
-      jarbas.style.display = "flex";
+<script>
+const respostaDiv = document.getElementById("resposta");
+const orb = document.getElementById("orb");
+const waves = document.querySelectorAll(".wave");
 
-      texto.innerHTML = `Olá, <b>${nome}</b>. Jarbas pronto.<br><br>`;
-    }
+// FUNÇÃO DE VOZ
+function falar(texto) {
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "pt-BR";
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    orb.classList.add("active");
+    waves.forEach(w => w.classList.add("active"));
 
-    if (SpeechRecognition) {
-      const rec = new SpeechRecognition();
-      rec.lang = "pt-BR";
-      rec.continuous = true;
-      rec.interimResults = true;
+    voz.onend = () => {
+        orb.classList.remove("active");
+        waves.forEach(w => w.classList.remove("active"));
+    };
 
-      rec.onstart = () => {
-        status.innerText = "🎤 Jarbas ouvindo você...";
-        btn.style.display = "none";
-      };
+    speechSynthesis.speak(voz);
+}
 
-      rec.onend = () => {
-        rec.start();
-      };
+// FUNÇÃO PARA ESCREVER LETRA POR LETRA
+function escreverLetraPorLetra(texto) {
+    respostaDiv.innerHTML = "";
+    let i = 0;
+    const intervalo = setInterval(() => {
+        respostaDiv.innerHTML += texto[i];
+        i++;
+        if (i >= texto.length) clearInterval(intervalo);
+    }, 40);
+}
 
-      rec.onresult = (event) => {
-        let final = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            final += event.results[i][0].transcript + " ";
-          }
-        }
-        if (final) {
-          texto.innerHTML += final + "<br>";
-          texto.scrollTop = texto.scrollHeight;
-        }
-      };
+// FUNÇÃO PARA ENVIAR MENSAGEM
+function enviar() {
+    const texto = msg.value.trim();
+    if (!texto) return;
 
-      btn.onclick = () => rec.start();
-    } else {
-      status.innerText = "Navegador sem suporte a voz.";
-      btn.style.display = "none";
-    }
-  </script>
+    fetch("/perguntar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensagem: texto })
+    })
+    .then(r => r.json())
+    .then(d => {
+        escreverLetraPorLetra(d.resposta);
+        falar(d.resposta);
+    });
+
+    msg.value = "";
+}
+</script>
 
 </body>
 </html>
