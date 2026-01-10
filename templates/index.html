@@ -2,68 +2,168 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Jarbas AI - Login</title>
+  <title>Jarbas AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       height: 100vh;
-      background: #0f0f0f;
+      background: radial-gradient(circle at top, #1a1a1a, #050505);
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: 'Inter', Arial, sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .box {
-      background: #1a1a1a;
+    .card {
+      width: 340px;
       padding: 30px;
-      border-radius: 12px;
-      width: 300px;
+      border-radius: 18px;
+      background: rgba(20,20,20,0.9);
+      box-shadow: 0 0 40px rgba(0,0,0,0.6);
       text-align: center;
+      animation: fade 0.5s ease;
     }
+
+    @keyframes fade {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    h2 { margin-top: 0; }
 
     input {
       width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 6px;
+      padding: 12px;
+      border-radius: 8px;
       border: none;
+      margin-top: 10px;
+      font-size: 15px;
       outline: none;
     }
 
     button {
       width: 100%;
+      margin-top: 14px;
       padding: 12px;
-      border-radius: 6px;
+      border-radius: 10px;
       border: none;
-      background: #d4a85f;
-      color: black;
-      font-weight: bold;
+      background: linear-gradient(135deg, #d9a85b, #b8873f);
+      color: #000;
+      font-weight: 600;
       cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 15px rgba(217,168,91,0.4);
+    }
+
+    #jarbas {
+      display: none;
+      width: 90%;
+      max-width: 600px;
+      height: 70vh;
+      padding: 25px;
+      border-radius: 18px;
+      background: rgba(20,20,20,0.9);
+      box-shadow: 0 0 40px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #status {
+      opacity: 0.7;
+      margin-bottom: 10px;
+    }
+
+    #texto {
+      flex: 1;
+      padding: 15px;
+      border-radius: 10px;
+      background: #141414;
+      overflow-y: auto;
+      font-size: 16px;
+    }
+
+    #ativar {
+      margin-top: 12px;
     }
   </style>
 </head>
 <body>
 
-  <div class="box">
+  <!-- LOGIN -->
+  <div id="login" class="card">
     <h2>Jarbas AI</h2>
     <p>Quem está entrando?</p>
-    <input id="nome" placeholder="Seu nome">
+    <input id="nome" placeholder="Digite seu nome">
     <button onclick="entrar()">Entrar</button>
   </div>
 
+  <!-- JARBAS -->
+  <div id="jarbas">
+    <div id="status">Jarbas aguardando...</div>
+    <div id="texto"></div>
+    <button id="ativar">Ativar Jarbas</button>
+  </div>
+
   <script>
+    const login = document.getElementById("login");
+    const jarbas = document.getElementById("jarbas");
+    const status = document.getElementById("status");
+    const texto = document.getElementById("texto");
+    const btn = document.getElementById("ativar");
+
     function entrar() {
       const nome = document.getElementById("nome").value.trim();
-
-      if (!nome) {
-        alert("Digite seu nome");
-        return;
-      }
+      if (!nome) return;
 
       localStorage.setItem("usuario", nome);
-      window.location.href = "jarbas.html";
+
+      login.style.display = "none";
+      jarbas.style.display = "flex";
+
+      texto.innerHTML = `Olá, <b>${nome}</b>. Jarbas pronto.<br><br>`;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.lang = "pt-BR";
+      rec.continuous = true;
+      rec.interimResults = true;
+
+      rec.onstart = () => {
+        status.innerText = "🎤 Jarbas ouvindo você...";
+        btn.style.display = "none";
+      };
+
+      rec.onend = () => {
+        rec.start();
+      };
+
+      rec.onresult = (event) => {
+        let final = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript + " ";
+          }
+        }
+        if (final) {
+          texto.innerHTML += final + "<br>";
+          texto.scrollTop = texto.scrollHeight;
+        }
+      };
+
+      btn.onclick = () => rec.start();
+    } else {
+      status.innerText = "Navegador sem suporte a voz.";
+      btn.style.display = "none";
     }
   </script>
 
