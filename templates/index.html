@@ -19,6 +19,7 @@
     #status {
       margin-bottom: 20px;
       opacity: 0.7;
+      font-size: 18px;
     }
 
     #texto {
@@ -29,6 +30,17 @@
       border-radius: 10px;
       background: #1a1a1a;
       font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    #ativar {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #c9a25d; /* rose gold */
+      color: black;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -36,16 +48,19 @@
 
   <div id="status">Jarbas aguardando...</div>
   <div id="texto"></div>
+  <button id="ativar">Ativar Jarbas</button>
 
   <script>
     const status = document.getElementById("status");
     const texto = document.getElementById("texto");
+    const btn = document.getElementById("ativar");
 
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       status.innerText = "Seu navegador não suporta reconhecimento de voz.";
+      btn.style.display = "none";
     } else {
       const rec = new SpeechRecognition();
       rec.lang = "pt-BR";
@@ -54,6 +69,7 @@
 
       rec.onstart = () => {
         status.innerText = "🎤 Jarbas ouvindo você...";
+        btn.style.display = "none";
       };
 
       rec.onend = () => {
@@ -75,7 +91,9 @@
         }
       };
 
-      rec.start();
+      btn.onclick = () => {
+        rec.start(); // aqui o navegador pede permissão do microfone
+      };
     }
   </script>
 
