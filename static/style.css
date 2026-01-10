@@ -1,110 +1,113 @@
-* {
-    box-sizing: border-box;
-}
-
 body {
-    margin: 0;
-    height: 100vh;
-    background: #0b0b0f;
-    color: white;
-    font-family: Arial, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at center, #0b1220, #05070d);
+  color: white;
+  font-family: "Segoe UI", Arial, sans-serif;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #container {
-    width: 100%;
-    max-width: 420px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
 }
 
 #orb-container {
-    position: relative;
-    width: 160px;
-    height: 160px;
-    margin-top: 30px;
+  position: relative;
+  width: 160px;
+  height: 160px;
 }
 
 #orb {
-    width: 90px;
-    height: 90px;
-    background: radial-gradient(circle, #4da6ff, #0059ff);
-    border-radius: 50%;
-    position: absolute;
-    top: 35px;
-    left: 35px;
-    z-index: 2;
-    transition: transform 0.2s;
-}
-
-#orb.active {
-    transform: scale(1.1);
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, #6ecbff, #0077ff);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 25px #2a8cff;
+  z-index: 2;
 }
 
 .wave {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border: 2px solid rgba(77,166,255,0.5);
-    border-radius: 50%;
-    opacity: 0;
-}
-
-.wave.active {
-    animation: wave 1.5s infinite;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(100,170,255,0.3);
+  animation: pulse 4s infinite;
+  opacity: 0;
 }
 
 .wave:nth-child(1) { animation-delay: 0s; }
-.wave:nth-child(2) { animation-delay: 0.5s; }
-.wave:nth-child(3) { animation-delay: 1s; }
+.wave:nth-child(2) { animation-delay: 1.3s; }
+.wave:nth-child(3) { animation-delay: 2.6s; }
 
-@keyframes wave {
-    0% {
-        transform: scale(0.8);
-        opacity: 0.7;
-    }
-    100% {
-        transform: scale(1.5);
-        opacity: 0;
-    }
+@keyframes pulse {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.active {
+  animation-duration: 1s !important;
+  opacity: 1;
+}
+
+#status {
+  font-size: 14px;
+  opacity: 0.7;
 }
 
 #chat-box {
-    flex: 1;
-    width: 100%;
-    margin-top: 30px;
-    background: #12121a;
-    border-radius: 12px;
-    padding: 15px;
-    overflow-y: auto;
-    font-size: 16px;
+  width: 90%;
+  max-width: 380px;
+  min-height: 120px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 14px;
+  overflow-y: auto;
+  font-size: 17px;
 }
 
 #input-area {
-    width: 100%;
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
+  width: 90%;
+  max-width: 380px;
+  display: flex;
+  gap: 8px;
 }
 
 #input-area input {
-    flex: 1;
-    padding: 12px;
-    border-radius: 8px;
-    border: none;
-    font-size: 16px;
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  font-size: 16px;
 }
 
 #input-area button {
-    padding: 12px 18px;
-    border-radius: 8px;
-    border: none;
-    background: #0059ff;
-    color: white;
-    font-size: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: none;
+  background: #0077ff;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
 }
