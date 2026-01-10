@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Jarbas AI</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #0f0f0f;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 id="msg"></h1>
+
+  <script>
+    const nome = localStorage.getItem("usuario");
+
+    if (!nome) {
+      window.location.href = "index.html";
+    } else {
+      document.getElementById("msg").innerText =
+        "Olá, " + nome + ". Jarbas está pronto.";
+    }
+  </script>
+
+</body>
+</html>
