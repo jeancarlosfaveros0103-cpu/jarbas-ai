@@ -26,6 +26,7 @@
     <div id="input-area">
         <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
         <button onclick="enviar()">Enviar</button>
+        <button onclick="ouvir()">🎤</button>
     </div>
 
 </div>
@@ -34,8 +35,9 @@
 const respostaDiv = document.getElementById("resposta");
 const orb = document.getElementById("orb");
 const waves = document.querySelectorAll(".wave");
+const msg = document.getElementById("msg");
 
-// FUNÇÃO DE VOZ
+// FUNÇÃO DE VOZ (Jarbas fala)
 function falar(texto) {
     const voz = new SpeechSynthesisUtterance(texto);
     voz.lang = "pt-BR";
@@ -79,6 +81,39 @@ function enviar() {
     });
 
     msg.value = "";
+}
+
+// ================= VOZ DE ENTRADA (VOCÊ FALA) =================
+
+let recognition;
+
+if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+        respostaDiv.innerHTML = "🎤 Ouvindo você...";
+    };
+
+    recognition.onresult = (event) => {
+        const textoFalado = event.results[0][0].transcript;
+        msg.value = textoFalado;
+        enviar(); // envia automaticamente
+    };
+
+    recognition.onerror = () => {
+        respostaDiv.innerHTML = "Erro ao usar o microfone.";
+    };
+} else {
+    alert("Seu navegador não suporta reconhecimento de voz.");
+}
+
+function ouvir() {
+    if (recognition) {
+        recognition.start();
+    }
 }
 </script>
 
