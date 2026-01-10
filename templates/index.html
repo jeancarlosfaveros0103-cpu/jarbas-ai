@@ -1,33 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Jarbas AI</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <title>Jarbas AI</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
 <div id="container">
 
-    <!-- BOLINHA COM ONDAS -->
-    <div id="orb-container">
-        <div class="wave"></div>
-        <div class="wave"></div>
-        <div class="wave"></div>
-        <div id="orb"></div>
-    </div>
+  <div id="orb-container">
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div id="orb"></div>
+  </div>
 
-    <!-- CHAT BOX -->
-    <div id="chat-box">
-        <div id="resposta"></div>
-    </div>
+  <div id="status">Jarbas pronto.</div>
 
-    <!-- INPUT -->
-    <div id="input-area">
-        <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
-        <button onclick="enviar()">Enviar</button>
-        <button onclick="ouvir()">🎤</button>
-    </div>
+  <div id="chat-box">
+    <div id="resposta"></div>
+  </div>
+
+  <div id="input-area">
+    <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
+    <button onclick="enviar()">➤</button>
+    <button onclick="ouvir()">🎤</button>
+  </div>
 
 </div>
 
@@ -36,84 +35,83 @@ const respostaDiv = document.getElementById("resposta");
 const orb = document.getElementById("orb");
 const waves = document.querySelectorAll(".wave");
 const msg = document.getElementById("msg");
+const status = document.getElementById("status");
 
-// FUNÇÃO DE VOZ (Jarbas fala)
+// Jarbas fala
 function falar(texto) {
-    const voz = new SpeechSynthesisUtterance(texto);
-    voz.lang = "pt-BR";
+  const voz = new SpeechSynthesisUtterance(texto);
+  voz.lang = "pt-BR";
 
-    orb.classList.add("active");
-    waves.forEach(w => w.classList.add("active"));
+  orb.classList.add("active");
+  waves.forEach(w => w.classList.add("active"));
+  status.innerText = "Jarbas falando...";
 
-    voz.onend = () => {
-        orb.classList.remove("active");
-        waves.forEach(w => w.classList.remove("active"));
-    };
+  voz.onend = () => {
+    orb.classList.remove("active");
+    waves.forEach(w => w.classList.remove("active"));
+    status.innerText = "Jarbas pronto.";
+  };
 
-    speechSynthesis.speak(voz);
+  speechSynthesis.speak(voz);
 }
 
-// FUNÇÃO PARA ESCREVER LETRA POR LETRA
+// Letra por letra
 function escreverLetraPorLetra(texto) {
-    respostaDiv.innerHTML = "";
-    let i = 0;
-    const intervalo = setInterval(() => {
-        respostaDiv.innerHTML += texto[i];
-        i++;
-        if (i >= texto.length) clearInterval(intervalo);
-    }, 40);
+  respostaDiv.innerHTML = "";
+  let i = 0;
+  const intervalo = setInterval(() => {
+    respostaDiv.innerHTML += texto[i];
+    i++;
+    if (i >= texto.length) clearInterval(intervalo);
+  }, 25);
 }
 
-// FUNÇÃO PARA ENVIAR MENSAGEM
+// Enviar
 function enviar() {
-    const texto = msg.value.trim();
-    if (!texto) return;
+  const texto = msg.value.trim();
+  if (!texto) return;
 
-    fetch("/perguntar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensagem: texto })
-    })
-    .then(r => r.json())
-    .then(d => {
-        escreverLetraPorLetra(d.resposta);
-        falar(d.resposta);
-    });
+  status.innerText = "Jarbas pensando...";
 
-    msg.value = "";
+  fetch("/perguntar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mensagem: texto })
+  })
+  .then(r => r.json())
+  .then(d => {
+    escreverLetraPorLetra(d.resposta);
+    falar(d.resposta);
+  });
+
+  msg.value = "";
 }
 
-// ================= VOZ DE ENTRADA (VOCÊ FALA) =================
-
+// Voz de entrada
 let recognition;
 
 if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = "pt-BR";
-    recognition.interimResults = false;
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = "pt-BR";
 
-    recognition.onstart = () => {
-        respostaDiv.innerHTML = "🎤 Ouvindo você...";
-    };
+  recognition.onstart = () => {
+    status.innerText = "Ouvindo você...";
+  };
 
-    recognition.onresult = (event) => {
-        const textoFalado = event.results[0][0].transcript;
-        msg.value = textoFalado;
-        enviar(); // envia automaticamente
-    };
+  recognition.onresult = (event) => {
+    const textoFalado = event.results[0][0].transcript;
+    msg.value = textoFalado;
+    enviar();
+  };
 
-    recognition.onerror = () => {
-        respostaDiv.innerHTML = "Erro ao usar o microfone.";
-    };
-} else {
-    alert("Seu navegador não suporta reconhecimento de voz.");
+  recognition.onerror = () => {
+    status.innerText = "Erro no microfone.";
+  };
 }
 
 function ouvir() {
-    if (recognition) {
-        recognition.start();
-    }
+  if (recognition) recognition.start();
 }
 </script>
 
