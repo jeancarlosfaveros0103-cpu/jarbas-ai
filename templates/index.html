@@ -1,86 +1,83 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Jarbas AI</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <title>Jarbas AI</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #0f0f0f;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #status {
+      margin-bottom: 20px;
+      opacity: 0.7;
+    }
+
+    #texto {
+      width: 90%;
+      max-width: 500px;
+      min-height: 120px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #1a1a1a;
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
 
-<div id="container">
+  <div id="status">Jarbas aguardando...</div>
+  <div id="texto"></div>
 
-    <!-- BOLINHA COM ONDAS -->
-    <div id="orb-container">
-        <div class="wave"></div>
-        <div class="wave"></div>
-        <div class="wave"></div>
-        <div id="orb"></div>
-    </div>
+  <script>
+    const status = document.getElementById("status");
+    const texto = document.getElementById("texto");
 
-    <!-- CHAT BOX -->
-    <div id="chat-box">
-        <div id="resposta"></div>
-    </div>
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    <!-- INPUT -->
-    <div id="input-area">
-        <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
-        <button onclick="enviar()">Enviar</button>
-    </div>
+    if (!SpeechRecognition) {
+      status.innerText = "Seu navegador não suporta reconhecimento de voz.";
+    } else {
+      const rec = new SpeechRecognition();
+      rec.lang = "pt-BR";
+      rec.continuous = true;
+      rec.interimResults = true;
 
-</div>
+      rec.onstart = () => {
+        status.innerText = "🎤 Jarbas ouvindo você...";
+      };
 
-<script>
-const respostaDiv = document.getElementById("resposta");
-const orb = document.getElementById("orb");
-const waves = document.querySelectorAll(".wave");
+      rec.onend = () => {
+        rec.start(); // reinicia automaticamente
+      };
 
-// FUNÇÃO DE VOZ
-function falar(texto) {
-    const voz = new SpeechSynthesisUtterance(texto);
-    voz.lang = "pt-BR";
+      rec.onresult = (event) => {
+        let final = "";
 
-    orb.classList.add("active");
-    waves.forEach(w => w.classList.add("active"));
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i];
+          if (res.isFinal) {
+            final += res[0].transcript + " ";
+          }
+        }
 
-    voz.onend = () => {
-        orb.classList.remove("active");
-        waves.forEach(w => w.classList.remove("active"));
-    };
+        if (final) {
+          texto.innerText += final;
+        }
+      };
 
-    speechSynthesis.speak(voz);
-}
-
-// FUNÇÃO PARA ESCREVER LETRA POR LETRA
-function escreverLetraPorLetra(texto) {
-    respostaDiv.innerHTML = "";
-    let i = 0;
-    const intervalo = setInterval(() => {
-        respostaDiv.innerHTML += texto[i];
-        i++;
-        if (i >= texto.length) clearInterval(intervalo);
-    }, 40);
-}
-
-// FUNÇÃO PARA ENVIAR MENSAGEM
-function enviar() {
-    const texto = msg.value.trim();
-    if (!texto) return;
-
-    fetch("/perguntar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensagem: texto })
-    })
-    .then(r => r.json())
-    .then(d => {
-        escreverLetraPorLetra(d.resposta);
-        falar(d.resposta);
-    });
-
-    msg.value = "";
-}
-</script>
+      rec.start();
+    }
+  </script>
 
 </body>
 </html>
