@@ -8,7 +8,6 @@
 <body>
 
 <div id="container">
-
   <div id="orb-container">
     <div class="wave"></div>
     <div class="wave"></div>
@@ -20,19 +19,13 @@
 
   <div id="chat-box">
     <div id="resposta"></div>
-    <img id="preview" style="max-width:150px; display:none; margin-top:10px; border-radius:10px;">
   </div>
 
   <div id="input-area">
     <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
-
-    <input id="imagem" type="file" accept="image/*" style="display:none" />
-    <button onclick="document.getElementById('imagem').click()">📸</button>
-
     <button onclick="enviar()">➤</button>
     <button onclick="ouvir()">🎤</button>
   </div>
-
 </div>
 
 <script>
@@ -41,18 +34,22 @@ const orb = document.getElementById("orb");
 const waves = document.querySelectorAll(".wave");
 const msg = document.getElementById("msg");
 const status = document.getElementById("status");
-const inputImagem = document.getElementById("imagem");
-const preview = document.getElementById("preview");
+
+let falando = false;
 
 function falar(texto) {
+  if (falando) speechSynthesis.cancel();
+
   const voz = new SpeechSynthesisUtterance(texto);
   voz.lang = "pt-BR";
+  falando = true;
 
   orb.classList.add("active");
   waves.forEach(w => w.classList.add("active"));
   status.innerText = "Jarbas falando...";
 
   voz.onend = () => {
+    falando = false;
     orb.classList.remove("active");
     waves.forEach(w => w.classList.remove("active"));
     status.innerText = "Jarbas pronto.";
@@ -64,39 +61,25 @@ function falar(texto) {
 function escreverLetraPorLetra(texto) {
   respostaDiv.innerHTML = "";
   let i = 0;
+
   const intervalo = setInterval(() => {
-    respostaDiv.innerHTML += texto[i];
+    respostaDiv.innerHTML += texto.charAt(i);
     i++;
     if (i >= texto.length) clearInterval(intervalo);
-  }, 25);
+  }, 20);
 }
-
-inputImagem.onchange = () => {
-  const file = inputImagem.files[0];
-  if (file) {
-    const url = URL.createObjectURL(file);
-    preview.src = url;
-    preview.style.display = "block";
-  } else {
-    preview.style.display = "none";
-  }
-};
 
 function enviar() {
   const texto = msg.value.trim();
-  const imagem = inputImagem.files[0];
-
-  if (!texto && !imagem) return;
+  if (!texto) return;
 
   status.innerText = "Jarbas pensando...";
-
-  const formData = new FormData();
-  formData.append("mensagem", texto);
-  if (imagem) formData.append("imagem", imagem);
+  respostaDiv.innerHTML = "<i>Digitando...</i>";
 
   fetch("/perguntar", {
     method: "POST",
-    body: formData
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mensagem: texto })
   })
   .then(r => r.json())
   .then(d => {
@@ -104,13 +87,16 @@ function enviar() {
     falar(d.resposta);
   })
   .catch(() => {
-    status.innerText = "Erro ao falar com o Jarbas.";
+    respostaDiv.innerHTML = "Erro ao conectar com o Jarbas.";
+    status.innerText = "Erro.";
   });
 
   msg.value = "";
-  inputImagem.value = "";
-  preview.style.display = "none";
 }
+
+msg.addEventListener("keydown", e => {
+  if (e.key === "Enter") enviar();
+});
 
 let recognition;
 
