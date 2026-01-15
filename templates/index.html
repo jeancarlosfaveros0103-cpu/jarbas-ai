@@ -20,12 +20,12 @@
 
   <div id="chat-box">
     <div id="resposta"></div>
+    <img id="preview" style="max-width:150px; display:none; margin-top:10px; border-radius:10px;">
   </div>
 
   <div id="input-area">
     <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
 
-    <!-- Upload de imagem -->
     <input id="imagem" type="file" accept="image/*" style="display:none" />
     <button onclick="document.getElementById('imagem').click()">📸</button>
 
@@ -41,6 +41,8 @@ const orb = document.getElementById("orb");
 const waves = document.querySelectorAll(".wave");
 const msg = document.getElementById("msg");
 const status = document.getElementById("status");
+const inputImagem = document.getElementById("imagem");
+const preview = document.getElementById("preview");
 
 function falar(texto) {
   const voz = new SpeechSynthesisUtterance(texto);
@@ -69,9 +71,20 @@ function escreverLetraPorLetra(texto) {
   }, 25);
 }
 
+inputImagem.onchange = () => {
+  const file = inputImagem.files[0];
+  if (file) {
+    const url = URL.createObjectURL(file);
+    preview.src = url;
+    preview.style.display = "block";
+  } else {
+    preview.style.display = "none";
+  }
+};
+
 function enviar() {
   const texto = msg.value.trim();
-  const imagem = document.getElementById("imagem").files[0];
+  const imagem = inputImagem.files[0];
 
   if (!texto && !imagem) return;
 
@@ -95,7 +108,8 @@ function enviar() {
   });
 
   msg.value = "";
-  document.getElementById("imagem").value = "";
+  inputImagem.value = "";
+  preview.style.display = "none";
 }
 
 let recognition;
