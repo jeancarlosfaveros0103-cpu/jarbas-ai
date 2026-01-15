@@ -24,6 +24,11 @@
 
   <div id="input-area">
     <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
+
+    <!-- Upload de imagem -->
+    <input id="imagem" type="file" accept="image/*" style="display:none" />
+    <button onclick="document.getElementById('imagem').click()">📸</button>
+
     <button onclick="enviar()">➤</button>
     <button onclick="ouvir()">🎤</button>
   </div>
@@ -66,22 +71,31 @@ function escreverLetraPorLetra(texto) {
 
 function enviar() {
   const texto = msg.value.trim();
-  if (!texto) return;
+  const imagem = document.getElementById("imagem").files[0];
+
+  if (!texto && !imagem) return;
 
   status.innerText = "Jarbas pensando...";
 
+  const formData = new FormData();
+  formData.append("mensagem", texto);
+  if (imagem) formData.append("imagem", imagem);
+
   fetch("/perguntar", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mensagem: texto })
+    body: formData
   })
   .then(r => r.json())
   .then(d => {
     escreverLetraPorLetra(d.resposta);
     falar(d.resposta);
+  })
+  .catch(() => {
+    status.innerText = "Erro ao falar com o Jarbas.";
   });
 
   msg.value = "";
+  document.getElementById("imagem").value = "";
 }
 
 let recognition;
