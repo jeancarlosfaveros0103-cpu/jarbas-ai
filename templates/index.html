@@ -1,117 +1,137 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Jarbas AI</title>
-  <link rel="stylesheet" href="/static/style.css">
+<meta charset="UTF-8">
+<title>Jarbas AI</title>
+<style>
+body {
+    margin: 0;
+    background: #0d0f1a;
+    font-family: Arial, sans-serif;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+#app {
+    width: 360px;
+    height: 640px;
+    background: #13162a;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#top {
+    padding: 15px;
+    text-align: center;
+    background: linear-gradient(90deg,#6b6bff,#00ffe7);
+    color: black;
+    font-weight: bold;
+}
+#chat {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+.msg {
+    margin: 6px 0;
+    padding: 10px;
+    border-radius: 12px;
+    max-width: 80%;
+}
+.user { background: #2e325a; margin-left: auto; }
+.jarbas { background: #00ffe722; border: 1px solid #00ffe7; }
+
+#input {
+    display: flex;
+    padding: 8px;
+    background: #0b0d1a;
+}
+#input input {
+    flex: 1;
+    border-radius: 20px;
+    border: none;
+    padding: 10px;
+    outline: none;
+}
+#input button {
+    margin-left: 6px;
+    border-radius: 50%;
+    border: none;
+    width: 40px;
+    height: 40px;
+    background: #00ffe7;
+    cursor: pointer;
+}
+</style>
 </head>
 <body>
 
-<div id="container">
+<div id="app">
+    <div id="top">JARBAS AI</div>
+    <div id="chat"></div>
 
-  <div id="orb-container">
-    <div class="wave"></div>
-    <div class="wave"></div>
-    <div class="wave"></div>
-    <div id="orb"></div>
-  </div>
-
-  <div id="status">Jarbas pronto.</div>
-
-  <div id="chat-box">
-    <div id="resposta"></div>
-  </div>
-
-  <div id="input-area">
-    <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
-    <button onclick="enviar()">➤</button>
-    <button onclick="ouvir()">🎤</button>
-  </div>
-
+    <div id="input">
+        <input id="msg" placeholder="Fale com o Jarbas...">
+        <button onclick="ouvir()">🎤</button>
+        <button onclick="enviar()">➤</button>
+    </div>
 </div>
 
 <script>
-const respostaDiv = document.getElementById("resposta");
-const orb = document.getElementById("orb");
-const waves = document.querySelectorAll(".wave");
+const chat = document.getElementById("chat");
 const msg = document.getElementById("msg");
-const status = document.getElementById("status");
 
-// Jarbas fala
-function falar(texto) {
-  const voz = new SpeechSynthesisUtterance(texto);
-  voz.lang = "pt-BR";
-
-  orb.classList.add("active");
-  waves.forEach(w => w.classList.add("active"));
-  status.innerText = "Jarbas falando...";
-
-  voz.onend = () => {
-    orb.classList.remove("active");
-    waves.forEach(w => w.classList.remove("active"));
-    status.innerText = "Jarbas pronto.";
-  };
-
-  speechSynthesis.speak(voz);
+function addMsg(texto, tipo){
+    const div = document.createElement("div");
+    div.className = "msg " + tipo;
+    div.textContent = texto;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
 }
 
-// Letra por letra
-function escreverLetraPorLetra(texto) {
-  respostaDiv.innerHTML = "";
-  let i = 0;
-  const intervalo = setInterval(() => {
-    respostaDiv.innerHTML += texto[i];
-    i++;
-    if (i >= texto.length) clearInterval(intervalo);
-  }, 25);
+function falar(texto){
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "pt-BR";
+    speechSynthesis.speak(voz);
 }
 
-// Enviar
-function enviar() {
-  const texto = msg.value.trim();
-  if (!texto) return;
-
-  status.innerText = "Jarbas pensando...";
-
-  fetch("/perguntar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mensagem: texto })
-  })
-  .then(r => r.json())
-  .then(d => {
-    escreverLetraPorLetra(d.resposta);
-    falar(d.resposta);
-  });
-
-  msg.value = "";
+function respostaEmpatica(texto){
+    if(texto.includes("triste")) return "Sinto que você não está bem… quer me contar melhor?";
+    if(texto.includes("feliz")) return "Isso é ótimo! Fico feliz por você.";
+    return "Entendi. Me conta mais sobre isso.";
 }
 
-// Voz de entrada
+function enviar(){
+    const t = msg.value.trim();
+    if(!t) return;
+    addMsg(t, "user");
+
+    const r = respostaEmpatica(t);
+    setTimeout(()=>{
+        addMsg(r, "jarbas");
+        falar(r);
+    }, 600);
+
+    msg.value = "";
+}
+
 let recognition;
-
 if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SpeechRecognition();
-  recognition.lang = "pt-BR";
-
-  recognition.onstart = () => {
-    status.innerText = "Ouvindo você...";
-  };
-
-  recognition.onresult = (event) => {
-    const textoFalado = event.results[0][0].transcript;
-    msg.value = textoFalado;
-    enviar();
-  };
-
-  recognition.onerror = () => {
-    status.innerText = "Erro no microfone.";
-  };
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SR();
+    recognition.lang = "pt-BR";
+    recognition.onresult = e => {
+        msg.value = e.results[0][0].transcript;
+        enviar();
+    };
 }
 
-function ouvir() {
-  if (recognition) recognition.start();
+function ouvir(){
+    if(recognition) recognition.start();
 }
 </script>
 
