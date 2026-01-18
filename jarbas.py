@@ -11,7 +11,7 @@ from openai import OpenAI
 # CONFIG
 # ===============================
 
-API_KEY = os.getenv("OPENAI_API_KEY") or "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"
+API_KEY = os.getenv("OPENAI_API_KEY") or "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"
 client = OpenAI(api_key=API_KEY)
 
 MEMORIA_FILE = "memoria.json"
@@ -85,3 +85,4 @@ def responder(texto):
     salvar_memoria(memoria)
 
     return resposta
+
