@@ -27,7 +27,7 @@
     <input id="msg" type="text" placeholder="Fale com o Jarbas..." />
 
     <input id="imagem" type="file" accept="image/*" style="display:none" />
-    <button onclick="document.getElementById('imagem').click()">📷</button>
+    <button onclick="document.getElementById('imagem').click()">🖼️</button>
 
     <button onclick="enviar()">➤</button>
     <button onclick="ouvir()">🎤</button>
@@ -44,9 +44,33 @@ const status = document.getElementById("status");
 const inputImagem = document.getElementById("imagem");
 const preview = document.getElementById("preview");
 
+let vozSelecionada = null;
+
+// Seleciona a melhor voz disponível em pt-BR
+function carregarVoz() {
+  const vozes = speechSynthesis.getVoices();
+
+  vozSelecionada = vozes.find(v =>
+    v.lang === "pt-BR" &&
+    (v.name.toLowerCase().includes("google") ||
+     v.name.toLowerCase().includes("natural") ||
+     v.name.toLowerCase().includes("microsoft"))
+  ) || vozes.find(v => v.lang === "pt-BR") || vozes[0];
+}
+
+speechSynthesis.onvoiceschanged = carregarVoz;
+carregarVoz();
+
 function falar(texto) {
   const voz = new SpeechSynthesisUtterance(texto);
   voz.lang = "pt-BR";
+
+  if (vozSelecionada) voz.voice = vozSelecionada;
+
+  // Voz mais fluida e viva
+  voz.rate = 1.08;
+  voz.pitch = 1.05;
+  voz.volume = 1.0;
 
   orb.classList.add("active");
   waves.forEach(w => w.classList.add("active"));
