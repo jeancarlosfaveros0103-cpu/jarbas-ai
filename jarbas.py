@@ -13,9 +13,9 @@ from openai import OpenAI
 # CONFIG
 # ===============================
 load_dotenv()
-API_KEY = os.getenv("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")
+API_KEY = os.getenv("OPENAI_API_KEY")
 
-client = OpenAI(api_key=API_KEY)
+client = OpenAI(api_key="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")
 
 MEMORIA_FILE = "memoria.json"
 
@@ -128,3 +128,4 @@ def responder(texto, imagem=None):
 
     except Exception:
         return "Erro ao analisar."
+
