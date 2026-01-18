@@ -10,13 +10,7 @@ def home():
 @app.route("/perguntar", methods=["POST"])
 def perguntar():
     pergunta = request.form.get("mensagem", "")
-    imagem = request.files.get("imagem")  # pega a imagem enviada
-
-    if imagem:
-        resposta = jarbas.responder(pergunta, imagem)
-    else:
-        resposta = jarbas.responder(pergunta)
-
+    resposta = jarbas.responder(pergunta)
     return jsonify({"resposta": resposta})
 
 if __name__ == "__main__":
