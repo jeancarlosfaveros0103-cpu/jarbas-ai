@@ -4,6 +4,7 @@
 
 import os
 import json
+import base64
 from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -12,12 +13,11 @@ from openai import OpenAI
 # CONFIG
 # ===============================
 load_dotenv()
-API_KEY = os.getenv("OPENAI_API_KEY")
+API_KEY = os.getenv("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")
 
 client = OpenAI(api_key=API_KEY)
 
 MEMORIA_FILE = "memoria.json"
-
 
 # ===============================
 # MEMÓRIA
@@ -31,17 +31,14 @@ def carregar_memoria():
             return {}
     return {}
 
-
 def salvar_memoria(memoria):
     with open(MEMORIA_FILE, "w", encoding="utf-8") as f:
         json.dump(memoria, f, ensure_ascii=False, indent=2)
 
-
 memoria = carregar_memoria()
 
-
 # ===============================
-# IA ONLINE
+# IA ONLINE (TEXTO)
 # ===============================
 def perguntar_ia(texto):
     if not API_KEY:
@@ -55,7 +52,7 @@ def perguntar_ia(texto):
                     "role": "system",
                     "content": (
                         "Você é JARBAS, um assistente brasileiro, "
-                        "amigo do Jean. Responda curto e claro."
+                        "amigo do Jean. Responda curto, claro e inteligente."
                     )
                 },
                 {"role": "user", "content": texto}
@@ -66,15 +63,14 @@ def perguntar_ia(texto):
     except Exception:
         return "Erro ao acessar a IA."
 
-
 # ===============================
-# FUNÇÃO USADA PELA UI 🎤
+# FUNÇÃO USADA PELA UI 🎤🖼️
 # ===============================
-def responder(texto):
-    if not texto:
-        return "Não ouvi nada, tenta de novo."
+def responder(texto, imagem=None):
+    if not texto and not imagem:
+        return "Não recebi nada, tenta de novo."
 
-    texto = texto.lower().strip()
+    texto = (texto or "").lower().strip()
 
     if "seu nome" in texto:
         return "Eu sou o Jarbas."
@@ -87,15 +83,48 @@ def responder(texto):
         agora = datetime.now()
         return f"Hoje é {agora.day}/{agora.month}/{agora.year}."
 
-    if texto in memoria:
+    if texto in memoria and not imagem:
         return memoria[texto]
 
-    # 👉 IA ONLINE
-    resposta = perguntar_ia(texto)
+    try:
+        # ===== COM IMAGEM =====
+        if imagem:
+            img_bytes = imagem.read()
+            img_b64 = base64.b64encode(img_bytes).decode("utf-8")
 
-    memoria[texto] = resposta
-    salvar_memoria(memoria)
+            resposta = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "Você é JARBAS, um assistente brasileiro, "
+                            "amigo do Jean. Analise imagens e responda curto e claro."
+                        )
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": texto or "O que tem nessa imagem?"},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{img_b64}"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=800
+            )
 
-    return resposta
+            return resposta.choices[0].message.content.strip()
 
+        # ===== SOMENTE TEXTO =====
+        resposta = perguntar_ia(texto)
+        memoria[texto] = resposta
+        salvar_memoria(memoria)
+        return resposta
 
+    except Exception:
+        return "Erro ao analisar."
