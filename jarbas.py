@@ -1,25 +1,24 @@
 # ===============================
-# JARBAS — CÉREBRO (VOZ + IA)
+# JARBAS — CÉREBRO (IA + MEMÓRIA)
 # ===============================
 
 import os
 import json
 from datetime import datetime
+from dotenv import load_dotenv
 from openai import OpenAI
 
 # ===============================
 # CONFIG
 # ===============================
+load_dotenv()
 
-API_KEY = os.getenv("OPENAI_API_KEY") or "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"
-client = OpenAI(api_key=API_KEY)
-
+client = OpenAI()  # lê automaticamente OPENAI_API_KEY do ambiente
 MEMORIA_FILE = "memoria.json"
 
 # ===============================
 # MEMÓRIA
 # ===============================
-
 def carregar_memoria():
     if os.path.exists(MEMORIA_FILE):
         try:
@@ -38,32 +37,36 @@ memoria = carregar_memoria()
 # ===============================
 # IA ONLINE
 # ===============================
-
 def perguntar_ia(texto):
-    if not API_KEY:
-        return "IA online não configurada."
-
     try:
-        resposta = client.responses.create(
-            model="gpt-4.1-mini",
-            input=texto
+        resposta = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Você é JARBAS, um assistente brasileiro, "
+                        "amigo do Jean. Responda curto, claro e educado."
+                    )
+                },
+                {"role": "user", "content": texto}
+            ],
+            max_tokens=500
         )
 
-        return resposta.output_text.strip()
+        return resposta.choices[0].message.content.strip()
 
     except Exception as e:
-        print("ERRO IA:", e)
-        return "Erro ao acessar a IA."
+        return f"ERRO IA: {e}"
 
 # ===============================
-# FUNÇÃO PRINCIPAL
+# FUNÇÃO USADA PELO FLASK
 # ===============================
-
 def responder(texto):
     if not texto:
         return "Não ouvi nada, tenta de novo."
 
-    texto = texto.lower().strip()
+    texto = texto.strip().lower()
 
     if "seu nome" in texto:
         return "Eu sou o Jarbas."
@@ -85,4 +88,3 @@ def responder(texto):
     salvar_memoria(memoria)
 
     return resposta
-
