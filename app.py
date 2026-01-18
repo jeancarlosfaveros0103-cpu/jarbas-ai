@@ -9,9 +9,7 @@ def home():
 
 @app.route("/perguntar", methods=["POST"])
 def perguntar():
-    data = request.json
-    pergunta = data.get("mensagem", "")
-
+    pergunta = request.form.get("mensagem", "")
     resposta = jarbas.responder(pergunta)
     return jsonify({"resposta": resposta})
 
