@@ -46,7 +46,7 @@ def perguntar_ia(texto):
                     "role": "system",
                     "content": (
                         "Você é JARBAS, um assistente brasileiro, "
-                        "amigo do Jean. Responda curto, claro e educado."
+                        "amigo do Jean. Respostas complexas, claras e educadas."
                     )
                 },
                 {"role": "user", "content": texto}
