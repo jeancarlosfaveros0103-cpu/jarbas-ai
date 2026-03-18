@@ -4,6 +4,7 @@
 
 import os
 import json
+import random
 from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -86,6 +87,27 @@ def responder(texto):
         return "Não ouvi nada, tenta de novo."
 
     texto = texto.strip().lower()
+
+    # ===============================
+    # PERSONALIDADE (🔥 NOVO)
+    # ===============================
+    respostas_bravo = [
+        "😡 Meu nome é JARBAS, não Jarvis.",
+        "🤨 Você tá me confundindo com outro assistente?",
+        "😤 Já falei, é JARBAS!",
+        "😠 Respeita o nome do pai!"
+    ]
+
+    if "jarvis" in texto:
+        resposta = random.choice(respostas_bravo)
+
+        memoria.append({
+            "pergunta": texto,
+            "resposta": resposta
+        })
+        salvar_memoria(memoria)
+
+        return resposta
 
     # ===============================
     # RESPOSTAS RÁPIDAS
