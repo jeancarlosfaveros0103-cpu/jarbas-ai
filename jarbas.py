@@ -1,5 +1,5 @@
 # ===============================
-# JARBAS — CÉREBRO (IA + MEMÓRIA)
+# JARBAS — CÉREBRO (IA + MEMÓRIA AVANÇADA)
 # ===============================
 
 import os
@@ -12,9 +12,10 @@ from openai import OpenAI
 # CONFIG
 # ===============================
 load_dotenv()
+client = OpenAI()
 
-client = OpenAI()  # lê automaticamente OPENAI_API_KEY do ambiente
 MEMORIA_FILE = "memoria.json"
+LIMITE_CONTEXTO = 5  # quantas conversas lembrar
 
 # ===============================
 # MEMÓRIA
@@ -25,8 +26,8 @@ def carregar_memoria():
             with open(MEMORIA_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except:
-            return {}
-    return {}
+            return []
+    return []
 
 def salvar_memoria(memoria):
     with open(MEMORIA_FILE, "w", encoding="utf-8") as f:
@@ -35,23 +36,41 @@ def salvar_memoria(memoria):
 memoria = carregar_memoria()
 
 # ===============================
+# GERAR CONTEXTO
+# ===============================
+def gerar_contexto():
+    contexto = ""
+    for item in memoria[-LIMITE_CONTEXTO:]:
+        contexto += f"Usuário: {item['pergunta']}\n"
+        contexto += f"Jarbas: {item['resposta']}\n"
+    return contexto
+
+# ===============================
 # IA ONLINE
 # ===============================
 def perguntar_ia(texto):
     try:
+        contexto = gerar_contexto()
+
         resposta = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
                     "content": (
-                        "Você é JARBAS, um assistente brasileiro, "
-                        "amigo do Jean. Resposde simples, clara e educada."
+                        "Você é JARBAS, um assistente pessoal brasileiro altamente inteligente, "
+                        "amigo do Jean. Responda de forma clara, detalhada e organizada. "
+                        "Se for pergunta de estudo, explique passo a passo como um professor. "
+                        "Sempre que possível, dê exemplos e finalize com um resumo simples."
                     )
                 },
-                {"role": "user", "content": texto}
+                {
+                    "role": "user",
+                    "content": contexto + "\nUsuário: " + texto
+                }
             ],
-            max_tokens=500
+            max_tokens=800,
+            temperature=0.7
         )
 
         return resposta.choices[0].message.content.strip()
@@ -60,7 +79,7 @@ def perguntar_ia(texto):
         return f"ERRO IA: {e}"
 
 # ===============================
-# FUNÇÃO USADA PELO FLASK
+# FUNÇÃO PRINCIPAL
 # ===============================
 def responder(texto):
     if not texto:
@@ -68,8 +87,11 @@ def responder(texto):
 
     texto = texto.strip().lower()
 
+    # ===============================
+    # RESPOSTAS RÁPIDAS
+    # ===============================
     if "seu nome" in texto:
-        return "Eu sou o Jarbas."
+        return "Eu sou o Jarbas, seu parceiro de estudos 😎"
 
     if "que horas" in texto:
         agora = datetime.now()
@@ -79,12 +101,19 @@ def responder(texto):
         agora = datetime.now()
         return f"Hoje é {agora.day}/{agora.month}/{agora.year}."
 
-    if texto in memoria:
-        return memoria[texto]
-
+    # ===============================
+    # IA
+    # ===============================
     resposta = perguntar_ia(texto)
 
-    memoria[texto] = resposta
+    # ===============================
+    # SALVAR MEMÓRIA
+    # ===============================
+    memoria.append({
+        "pergunta": texto,
+        "resposta": resposta
+    })
+
     salvar_memoria(memoria)
 
     return resposta
