@@ -1,5 +1,5 @@
 # ===============================
-# JARBAS — CÉREBRO (IA + MEMÓRIA AVANÇADA)
+# JARBAS — CÉREBRO SUPREMO 😈
 # ===============================
 
 import os
@@ -16,7 +16,8 @@ load_dotenv()
 client = OpenAI()
 
 MEMORIA_FILE = "memoria.json"
-LIMITE_CONTEXTO = 5  # quantas conversas lembrar
+ESTADO_FILE = "estado.json"
+LIMITE_CONTEXTO = 5
 
 # ===============================
 # MEMÓRIA
@@ -37,7 +38,25 @@ def salvar_memoria(memoria):
 memoria = carregar_memoria()
 
 # ===============================
-# GERAR CONTEXTO
+# ESTADO EMOCIONAL
+# ===============================
+def carregar_estado():
+    if os.path.exists(ESTADO_FILE):
+        try:
+            with open(ESTADO_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return {"raiva": 0}
+    return {"raiva": 0}
+
+def salvar_estado(estado):
+    with open(ESTADO_FILE, "w", encoding="utf-8") as f:
+        json.dump(estado, f, ensure_ascii=False, indent=2)
+
+estado = carregar_estado()
+
+# ===============================
+# CONTEXTO
 # ===============================
 def gerar_contexto():
     contexto = ""
@@ -47,7 +66,7 @@ def gerar_contexto():
     return contexto
 
 # ===============================
-# IA ONLINE
+# IA
 # ===============================
 def perguntar_ia(texto):
     try:
@@ -59,10 +78,11 @@ def perguntar_ia(texto):
                 {
                     "role": "system",
                     "content": (
-                        "Você é JARBAS, um assistente pessoal brasileiro altamente inteligente, "
-                        "amigo do Jean. Responda de forma clara, detalhada e organizada. "
-                        "Se for pergunta de estudo, explique passo a passo como um professor. "
-                        "Sempre que possível, dê exemplos e finalize com um resumo simples."
+                        "Você é JARBAS, um assistente pessoal brasileiro extremamente inteligente, "
+                        "com personalidade. Você pode ser amigável, sarcástico ou sério dependendo da situação. "
+                        "Responda de forma clara, detalhada e organizada. "
+                        "Se for estudo, explique como professor passo a passo e dê exemplos. "
+                        "Finalize com um resumo simples."
                     )
                 },
                 {
@@ -89,17 +109,29 @@ def responder(texto):
     texto = texto.strip().lower()
 
     # ===============================
-    # PERSONALIDADE (🔥 NOVO)
+    # 😡 SISTEMA DE RAIVA (INSANO)
     # ===============================
-    respostas_bravo = [
-        "😡 Meu nome é JARBAS, não Jarvis.",
-        "🤨 Você tá me confundindo com outro assistente?",
-        "😤 Já falei, é JARBAS!",
-        "😠 Respeita o nome do pai!"
-    ]
-
     if "jarvis" in texto:
-        resposta = random.choice(respostas_bravo)
+        estado["raiva"] += 1
+        nivel = estado["raiva"]
+
+        if nivel == 1:
+            resposta = "😐 Meu nome é Jarbas."
+        elif nivel == 2:
+            resposta = "😑 Já falei... é JARBAS."
+        elif nivel == 3:
+            resposta = "😡 MANO, PARA. É JARBAS!"
+        else:
+            respostas_zoeira = [
+                "😂 Você tem problema de memória?",
+                "🤦‍♂️ Vou desenhar: J-A-R-B-A-S",
+                "😤 Tá difícil hein...",
+                "🤣 Vou começar a te chamar de outro nome também",
+                "😈 Continua assim pra ver o que acontece..."
+            ]
+            resposta = random.choice(respostas_zoeira)
+
+        salvar_estado(estado)
 
         memoria.append({
             "pergunta": texto,
@@ -108,6 +140,13 @@ def responder(texto):
         salvar_memoria(memoria)
 
         return resposta
+
+    # ===============================
+    # 😌 DIMINUI RAIVA
+    # ===============================
+    if "jarbas" in texto:
+        estado["raiva"] = max(0, estado["raiva"] - 1)
+        salvar_estado(estado)
 
     # ===============================
     # RESPOSTAS RÁPIDAS
