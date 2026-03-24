@@ -1,10 +1,12 @@
 # ===============================
-# JARBAS — CÉREBRO SUPREMO 😈
+# JARBAS — CÉREBRO SUPREMO v2
 # ===============================
 
 import os
 import json
 import random
+import base64
+import re
 from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -12,64 +14,165 @@ from openai import OpenAI
 # ===============================
 # CONFIG
 # ===============================
+
 load_dotenv()
 client = OpenAI()
 
 MEMORIA_FILE = "memoria.json"
 ESTADO_FILE = "estado.json"
+LOG_FILE = "log.txt"
+
 LIMITE_CONTEXTO = 5
+MAX_MEMORIA = 50
+
+# ===============================
+# LOGGER
+# ===============================
+
+def log(texto):
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(f"[{datetime.now()}] {texto}\n")
+
+# ===============================
+# REMOVER EMOJIS
+# ===============================
+
+def remover_emojis(texto):
+
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"
+        "\U0001F300-\U0001F5FF"
+        "\U0001F680-\U0001F6FF"
+        "\U0001F900-\U0001F9FF"
+        "]+",
+        flags=re.UNICODE
+    )
+
+    return emoji_pattern.sub("", texto)
 
 # ===============================
 # MEMÓRIA
 # ===============================
+
 def carregar_memoria():
-    if os.path.exists(MEMORIA_FILE):
-        try:
+    try:
+        if os.path.exists(MEMORIA_FILE):
             with open(MEMORIA_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except:
-            return []
+    except:
+        log("Erro ao carregar memória")
+
     return []
 
 def salvar_memoria(memoria):
-    with open(MEMORIA_FILE, "w", encoding="utf-8") as f:
-        json.dump(memoria, f, ensure_ascii=False, indent=2)
+
+    # limitar tamanho
+    if len(memoria) > MAX_MEMORIA:
+        memoria = memoria[-MAX_MEMORIA:]
+
+    try:
+        with open(MEMORIA_FILE, "w", encoding="utf-8") as f:
+            json.dump(memoria, f, ensure_ascii=False, indent=2)
+    except:
+        log("Erro ao salvar memória")
 
 memoria = carregar_memoria()
 
 # ===============================
-# ESTADO EMOCIONAL
+# ESTADO
 # ===============================
+
 def carregar_estado():
-    if os.path.exists(ESTADO_FILE):
-        try:
+    try:
+        if os.path.exists(ESTADO_FILE):
             with open(ESTADO_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except:
-            return {"raiva": 0}
+    except:
+        log("Erro ao carregar estado")
+
     return {"raiva": 0}
 
 def salvar_estado(estado):
-    with open(ESTADO_FILE, "w", encoding="utf-8") as f:
-        json.dump(estado, f, ensure_ascii=False, indent=2)
+
+    try:
+        with open(ESTADO_FILE, "w", encoding="utf-8") as f:
+            json.dump(estado, f, ensure_ascii=False, indent=2)
+    except:
+        log("Erro ao salvar estado")
 
 estado = carregar_estado()
 
 # ===============================
 # CONTEXTO
 # ===============================
+
 def gerar_contexto():
+
     contexto = ""
+
     for item in memoria[-LIMITE_CONTEXTO:]:
+
         contexto += f"Usuário: {item['pergunta']}\n"
         contexto += f"Jarbas: {item['resposta']}\n"
+
     return contexto
+
+# ===============================
+# CACHE INTELIGENTE
+# ===============================
+
+def buscar_cache(pergunta):
+
+    for item in memoria:
+
+        if item["pergunta"].lower() == pergunta.lower():
+
+            return item["resposta"]
+
+    return None
+
+# ===============================
+# GERADOR DE IMAGEM
+# ===============================
+
+def criar_imagem(prompt):
+
+    try:
+
+        print("Criando imagem...")
+
+        resultado = client.images.generate(
+            model="gpt-image-1",
+            prompt=prompt,
+            size="1024x1024"
+        )
+
+        imagem_base64 = resultado.data[0].b64_json
+
+        nome = f"img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+
+        with open(nome, "wb") as f:
+            f.write(base64.b64decode(imagem_base64))
+
+        log(f"Imagem criada: {nome}")
+
+        return f"Imagem criada: {nome}"
+
+    except Exception as erro:
+
+        log(f"Erro imagem: {erro}")
+
+        return "Erro ao gerar imagem."
 
 # ===============================
 # IA
 # ===============================
+
 def perguntar_ia(texto):
+
     try:
+
         contexto = gerar_contexto()
 
         resposta = client.chat.completions.create(
@@ -77,104 +180,117 @@ def perguntar_ia(texto):
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        "Você é JARBAS, um assistente pessoal brasileiro extremamente inteligente, "
-                        "com personalidade. Você pode ser amigável, sarcástico ou sério dependendo da situação. "
-                        "Responda de forma clara, detalhada e organizada. "
-                        "Se for estudo, explique como professor passo a passo e dê exemplos. "
-                        "Finalize com um resumo simples."
-                    )
+                    "content":
+                    "Você é JARBAS, um assistente brasileiro inteligente, "
+                    "com personalidade variável e respostas claras."
                 },
                 {
                     "role": "user",
                     "content": contexto + "\nUsuário: " + texto
                 }
             ],
-            max_tokens=800,
+            max_tokens=700,
             temperature=0.7
         )
 
-        return resposta.choices[0].message.content.strip()
+        texto_resp = resposta.choices[0].message.content.strip()
+
+        return remover_emojis(texto_resp)
 
     except Exception as e:
-        return f"ERRO IA: {e}"
+
+        log(f"Erro IA: {e}")
+
+        return "Erro ao falar com a IA."
 
 # ===============================
 # FUNÇÃO PRINCIPAL
 # ===============================
+
 def responder(texto):
+
     if not texto:
-        return "Não ouvi nada, tenta de novo."
+        return "Digite algo."
 
-    texto = texto.strip().lower()
+    texto_original = texto
+    texto = texto.lower().strip()
+
+    log(f"Pergunta: {texto_original}")
 
     # ===============================
-    # 😡 SISTEMA DE RAIVA (INSANO)
+    # CACHE
     # ===============================
-    if "jarvis" in texto:
-        estado["raiva"] += 1
-        nivel = estado["raiva"]
 
-        if nivel == 1:
-            resposta = "😐 Meu nome é Jarbas."
-        elif nivel == 2:
-            resposta = "😑 Já falei... é JARBAS."
-        elif nivel == 3:
-            resposta = "😡 MANO, PARA. É JARBAS!"
-        else:
-            respostas_zoeira = [
-                "😂 Você tem problema de memória?",
-                "🤦‍♂️ Vou desenhar: J-A-R-B-A-S",
-                "😤 Tá difícil hein...",
-                "🤣 Vou começar a te chamar de outro nome também",
-                "😈 Continua assim pra ver o que acontece..."
-            ]
-            resposta = random.choice(respostas_zoeira)
+    cache = buscar_cache(texto_original)
 
-        salvar_estado(estado)
+    if cache:
+        return cache
+
+    # ===============================
+    # IMAGEM
+    # ===============================
+
+    comandos_imagem = [
+        "crie uma imagem",
+        "gerar imagem",
+        "desenhe",
+        "faça uma imagem",
+        "imagem de",
+        "ilustre"
+    ]
+
+    if any(cmd in texto for cmd in comandos_imagem):
+
+        prompt = texto_original
+
+        resposta = criar_imagem(prompt)
 
         memoria.append({
-            "pergunta": texto,
+            "pergunta": texto_original,
             "resposta": resposta
         })
+
         salvar_memoria(memoria)
 
         return resposta
 
     # ===============================
-    # 😌 DIMINUI RAIVA
+    # RAIVA
     # ===============================
-    if "jarbas" in texto:
-        estado["raiva"] = max(0, estado["raiva"] - 1)
+
+    if "jarvis" in texto:
+
+        estado["raiva"] += 1
+
+        respostas = [
+            "Meu nome é Jarbas.",
+            "Já falei que é Jarbas.",
+            "PARA. É JARBAS.",
+            "Tá testando minha paciência..."
+        ]
+
+        resposta = respostas[min(
+            estado["raiva"],
+            len(respostas) - 1
+        )]
+
         salvar_estado(estado)
 
-    # ===============================
-    # RESPOSTAS RÁPIDAS
-    # ===============================
-    if "seu nome" in texto:
-        return "Eu sou o Jarbas, seu parceiro de estudos 😎"
-
-    if "que horas" in texto:
-        agora = datetime.now()
-        return f"Agora são {agora.hour}:{agora.minute:02d}."
-
-    if "que dia" in texto or "data" in texto:
-        agora = datetime.now()
-        return f"Hoje é {agora.day}/{agora.month}/{agora.year}."
+        return resposta
 
     # ===============================
     # IA
     # ===============================
-    resposta = perguntar_ia(texto)
 
-    # ===============================
-    # SALVAR MEMÓRIA
-    # ===============================
+    resposta = perguntar_ia(texto_original)
+
     memoria.append({
-        "pergunta": texto,
+        "pergunta": texto_original,
         "resposta": resposta
     })
 
     salvar_memoria(memoria)
+
+    log(f"Resposta: {resposta}")
 
     return resposta
