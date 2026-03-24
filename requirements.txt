@@ -2,3 +2,4 @@ flask
 gunicorn
 python-dotenv
 openai>=1.0.0
+pillow
