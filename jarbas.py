@@ -1,10 +1,9 @@
 # ===============================
-# JARBAS — CÉREBRO SUPREMO v2
+# JARBAS — CÉREBRO SUPREMO v3
 # ===============================
 
 import os
 import json
-import random
 import base64
 import re
 from datetime import datetime
@@ -22,16 +21,20 @@ MEMORIA_FILE = "memoria.json"
 ESTADO_FILE = "estado.json"
 LOG_FILE = "log.txt"
 
-LIMITE_CONTEXTO = 5
-MAX_MEMORIA = 50
+LIMITE_CONTEXTO = 8
+MAX_MEMORIA = 100
 
 # ===============================
 # LOGGER
 # ===============================
 
 def log(texto):
+
     with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"[{datetime.now()}] {texto}\n")
+
+        f.write(
+            f"[{datetime.now()}] {texto}\n"
+        )
 
 # ===============================
 # REMOVER EMOJIS
@@ -56,25 +59,48 @@ def remover_emojis(texto):
 # ===============================
 
 def carregar_memoria():
+
     try:
+
         if os.path.exists(MEMORIA_FILE):
-            with open(MEMORIA_FILE, "r", encoding="utf-8") as f:
+
+            with open(
+                MEMORIA_FILE,
+                "r",
+                encoding="utf-8"
+            ) as f:
+
                 return json.load(f)
+
     except:
+
         log("Erro ao carregar memória")
 
     return []
 
 def salvar_memoria(memoria):
 
-    # limitar tamanho
     if len(memoria) > MAX_MEMORIA:
+
         memoria = memoria[-MAX_MEMORIA:]
 
     try:
-        with open(MEMORIA_FILE, "w", encoding="utf-8") as f:
-            json.dump(memoria, f, ensure_ascii=False, indent=2)
+
+        with open(
+            MEMORIA_FILE,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                memoria,
+                f,
+                ensure_ascii=False,
+                indent=2
+            )
+
     except:
+
         log("Erro ao salvar memória")
 
 memoria = carregar_memoria()
@@ -84,11 +110,21 @@ memoria = carregar_memoria()
 # ===============================
 
 def carregar_estado():
+
     try:
+
         if os.path.exists(ESTADO_FILE):
-            with open(ESTADO_FILE, "r", encoding="utf-8") as f:
+
+            with open(
+                ESTADO_FILE,
+                "r",
+                encoding="utf-8"
+            ) as f:
+
                 return json.load(f)
+
     except:
+
         log("Erro ao carregar estado")
 
     return {"raiva": 0}
@@ -96,9 +132,22 @@ def carregar_estado():
 def salvar_estado(estado):
 
     try:
-        with open(ESTADO_FILE, "w", encoding="utf-8") as f:
-            json.dump(estado, f, ensure_ascii=False, indent=2)
+
+        with open(
+            ESTADO_FILE,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                estado,
+                f,
+                ensure_ascii=False,
+                indent=2
+            )
+
     except:
+
         log("Erro ao salvar estado")
 
 estado = carregar_estado()
@@ -111,10 +160,14 @@ def gerar_contexto():
 
     contexto = ""
 
-    for item in memoria[-LIMITE_CONTEXTO:]:
+    ultimos = memoria[-LIMITE_CONTEXTO:]
 
-        contexto += f"Usuário: {item['pergunta']}\n"
-        contexto += f"Jarbas: {item['resposta']}\n"
+    for item in ultimos:
+
+        contexto += (
+            f"Usuário: {item['pergunta']}\n"
+            f"Jarbas: {item['resposta']}\n"
+        )
 
     return contexto
 
@@ -124,9 +177,11 @@ def gerar_contexto():
 
 def buscar_cache(pergunta):
 
+    pergunta = pergunta.lower()
+
     for item in memoria:
 
-        if item["pergunta"].lower() == pergunta.lower():
+        if pergunta in item["pergunta"].lower():
 
             return item["resposta"]
 
@@ -140,20 +195,31 @@ def criar_imagem(prompt):
 
     try:
 
-        print("Criando imagem...")
-
         resultado = client.images.generate(
             model="gpt-image-1",
             prompt=prompt,
             size="1024x1024"
         )
 
-        imagem_base64 = resultado.data[0].b64_json
+        imagem_base64 = (
+            resultado.data[0].b64_json
+        )
 
-        nome = f"img_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        nome = (
+            "img_" +
+            datetime.now().strftime(
+                "%Y%m%d_%H%M%S"
+            ) +
+            ".png"
+        )
 
         with open(nome, "wb") as f:
-            f.write(base64.b64decode(imagem_base64))
+
+            f.write(
+                base64.b64decode(
+                    imagem_base64
+                )
+            )
 
         log(f"Imagem criada: {nome}")
 
@@ -166,7 +232,54 @@ def criar_imagem(prompt):
         return "Erro ao gerar imagem."
 
 # ===============================
-# IA
+# ENTENDER IMAGEM
+# ===============================
+
+def analisar_imagem(caminho):
+
+    try:
+
+        with open(caminho, "rb") as f:
+
+            imagem_base64 = base64.b64encode(
+                f.read()
+            ).decode("utf-8")
+
+        resposta = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Descreva esta imagem."
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url":
+                                f"data:image/png;base64,{imagem_base64}"
+                            }
+                        }
+                    ]
+                }
+            ]
+        )
+
+        return remover_emojis(
+            resposta.choices[0]
+            .message.content
+        )
+
+    except Exception as erro:
+
+        log(f"Erro análise imagem: {erro}")
+
+        return "Erro ao analisar imagem."
+
+# ===============================
+# IA PRINCIPAL
 # ===============================
 
 def perguntar_ia(texto):
@@ -178,24 +291,40 @@ def perguntar_ia(texto):
         resposta = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
+
                 {
                     "role": "system",
                     "content":
-                    "Você é JARBAS, um assistente brasileiro inteligente, "
-                    "com personalidade variável e respostas claras."
+                    (
+                        "Você é JARBAS, "
+                        "um assistente brasileiro inteligente, "
+                        "direto ao ponto, "
+                        "sem usar emojis."
+                    )
                 },
+
                 {
                     "role": "user",
-                    "content": contexto + "\nUsuário: " + texto
+                    "content":
+                    contexto +
+                    "\nUsuário: " +
+                    texto
                 }
+
             ],
             max_tokens=700,
             temperature=0.7
         )
 
-        texto_resp = resposta.choices[0].message.content.strip()
+        texto_resp = (
+            resposta.choices[0]
+            .message.content
+            .strip()
+        )
 
-        return remover_emojis(texto_resp)
+        return remover_emojis(
+            texto_resp
+        )
 
     except Exception as e:
 
@@ -207,15 +336,34 @@ def perguntar_ia(texto):
 # FUNÇÃO PRINCIPAL
 # ===============================
 
-def responder(texto):
+def responder(texto, imagem=None):
 
-    if not texto:
+    if not texto and not imagem:
+
         return "Digite algo."
 
-    texto_original = texto
-    texto = texto.lower().strip()
+    texto_original = texto or ""
 
     log(f"Pergunta: {texto_original}")
+
+    # ===============================
+    # IMAGEM ENVIADA
+    # ===============================
+
+    if imagem:
+
+        resposta = analisar_imagem(imagem)
+
+        memoria.append({
+            "pergunta":
+            "[imagem enviada]",
+            "resposta":
+            resposta
+        })
+
+        salvar_memoria(memoria)
+
+        return resposta
 
     # ===============================
     # CACHE
@@ -224,30 +372,37 @@ def responder(texto):
     cache = buscar_cache(texto_original)
 
     if cache:
+
         return cache
 
+    texto_lower = texto_original.lower()
+
     # ===============================
-    # IMAGEM
+    # GERAR IMAGEM
     # ===============================
 
     comandos_imagem = [
+
         "crie uma imagem",
         "gerar imagem",
         "desenhe",
         "faça uma imagem",
         "imagem de",
         "ilustre"
+
     ]
 
-    if any(cmd in texto for cmd in comandos_imagem):
+    if any(cmd in texto_lower for cmd in comandos_imagem):
 
-        prompt = texto_original
-
-        resposta = criar_imagem(prompt)
+        resposta = criar_imagem(
+            texto_original
+        )
 
         memoria.append({
-            "pergunta": texto_original,
-            "resposta": resposta
+            "pergunta":
+            texto_original,
+            "resposta":
+            resposta
         })
 
         salvar_memoria(memoria)
@@ -258,35 +413,46 @@ def responder(texto):
     # RAIVA
     # ===============================
 
-    if "jarvis" in texto:
+    if "jarvis" in texto_lower:
 
         estado["raiva"] += 1
 
         respostas = [
+
             "Meu nome é Jarbas.",
             "Já falei que é Jarbas.",
             "PARA. É JARBAS.",
-            "Tá testando minha paciência..."
+            "Tá testando minha paciência."
+
         ]
 
-        resposta = respostas[min(
-            estado["raiva"],
-            len(respostas) - 1
-        )]
+        resposta = respostas[
+            min(
+                estado["raiva"],
+                len(respostas) - 1
+            )
+        ]
 
         salvar_estado(estado)
 
         return resposta
 
     # ===============================
-    # IA
+    # IA NORMAL
     # ===============================
 
-    resposta = perguntar_ia(texto_original)
+    resposta = perguntar_ia(
+        texto_original
+    )
 
     memoria.append({
-        "pergunta": texto_original,
-        "resposta": resposta
+
+        "pergunta":
+        texto_original,
+
+        "resposta":
+        resposta
+
     })
 
     salvar_memoria(memoria)
