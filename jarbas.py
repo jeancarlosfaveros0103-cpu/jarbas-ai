@@ -1,5 +1,6 @@
 # ===============================
-# JARBAS — CÉREBRO SUPREMO v3
+# JARBAS — CÉREBRO SUPREMO v5
+# COMPLETO E AVANÇADO
 # ===============================
 
 import os
@@ -15,14 +16,21 @@ from openai import OpenAI
 # ===============================
 
 load_dotenv()
+
 client = OpenAI()
 
 MEMORIA_FILE = "memoria.json"
 ESTADO_FILE = "estado.json"
 LOG_FILE = "log.txt"
 
+STATIC_FOLDER = "static"
+
 LIMITE_CONTEXTO = 8
 MAX_MEMORIA = 100
+
+# Criar pasta static
+if not os.path.exists(STATIC_FOLDER):
+    os.makedirs(STATIC_FOLDER)
 
 # ===============================
 # LOGGER
@@ -30,11 +38,17 @@ MAX_MEMORIA = 100
 
 def log(texto):
 
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
+    try:
 
-        f.write(
-            f"[{datetime.now()}] {texto}\n"
-        )
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+
+            f.write(
+                f"[{datetime.now()}] {texto}\n"
+            )
+
+    except:
+
+        pass
 
 # ===============================
 # REMOVER EMOJIS
@@ -72,19 +86,19 @@ def carregar_memoria():
 
                 return json.load(f)
 
-    except:
+    except Exception as erro:
 
-        log("Erro ao carregar memória")
+        log(f"Erro carregar memória: {erro}")
 
     return []
 
 def salvar_memoria(memoria):
 
-    if len(memoria) > MAX_MEMORIA:
-
-        memoria = memoria[-MAX_MEMORIA:]
-
     try:
+
+        if len(memoria) > MAX_MEMORIA:
+
+            memoria[:] = memoria[-MAX_MEMORIA:]
 
         with open(
             MEMORIA_FILE,
@@ -99,9 +113,9 @@ def salvar_memoria(memoria):
                 indent=2
             )
 
-    except:
+    except Exception as erro:
 
-        log("Erro ao salvar memória")
+        log(f"Erro salvar memória: {erro}")
 
 memoria = carregar_memoria()
 
@@ -123,9 +137,9 @@ def carregar_estado():
 
                 return json.load(f)
 
-    except:
+    except Exception as erro:
 
-        log("Erro ao carregar estado")
+        log(f"Erro carregar estado: {erro}")
 
     return {"raiva": 0}
 
@@ -146,9 +160,9 @@ def salvar_estado(estado):
                 indent=2
             )
 
-    except:
+    except Exception as erro:
 
-        log("Erro ao salvar estado")
+        log(f"Erro salvar estado: {erro}")
 
 estado = carregar_estado()
 
@@ -183,6 +197,8 @@ def buscar_cache(pergunta):
 
         if pergunta in item["pergunta"].lower():
 
+            log("Resposta vinda do cache")
+
             return item["resposta"]
 
     return None
@@ -213,7 +229,12 @@ def criar_imagem(prompt):
             ".png"
         )
 
-        with open(nome, "wb") as f:
+        caminho = os.path.join(
+            STATIC_FOLDER,
+            nome
+        )
+
+        with open(caminho, "wb") as f:
 
             f.write(
                 base64.b64decode(
@@ -221,9 +242,9 @@ def criar_imagem(prompt):
                 )
             )
 
-        log(f"Imagem criada: {nome}")
+        log(f"Imagem criada: {caminho}")
 
-        return f"Imagem criada: {nome}"
+        return f"/static/{nome}"
 
     except Exception as erro:
 
@@ -232,7 +253,7 @@ def criar_imagem(prompt):
         return "Erro ao gerar imagem."
 
 # ===============================
-# ENTENDER IMAGEM
+# ANALISAR IMAGEM
 # ===============================
 
 def analisar_imagem(caminho):
@@ -267,10 +288,12 @@ def analisar_imagem(caminho):
             ]
         )
 
-        return remover_emojis(
+        texto = (
             resposta.choices[0]
             .message.content
         )
+
+        return remover_emojis(texto)
 
     except Exception as erro:
 
@@ -297,7 +320,7 @@ def perguntar_ia(texto):
                     "content":
                     (
                         "Você é JARBAS, "
-                        "um assistente brasileiro inteligente, "
+                        "assistente brasileiro inteligente, "
                         "direto ao ponto, "
                         "sem usar emojis."
                     )
@@ -326,9 +349,9 @@ def perguntar_ia(texto):
             texto_resp
         )
 
-    except Exception as e:
+    except Exception as erro:
 
-        log(f"Erro IA: {e}")
+        log(f"Erro IA: {erro}")
 
         return "Erro ao falar com a IA."
 
@@ -378,7 +401,7 @@ def responder(texto, imagem=None):
     texto_lower = texto_original.lower()
 
     # ===============================
-    # GERAR IMAGEM
+    # COMANDOS DE IMAGEM
     # ===============================
 
     comandos_imagem = [
@@ -410,7 +433,7 @@ def responder(texto, imagem=None):
         return resposta
 
     # ===============================
-    # RAIVA
+    # SISTEMA RAIVA
     # ===============================
 
     if "jarvis" in texto_lower:
