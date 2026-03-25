@@ -3,13 +3,17 @@ import jarbas
 import os
 from datetime import datetime
 
-app = Flask(__name__)
+# IMPORTANTE: definir static_folder
+app = Flask(
+    __name__,
+    static_folder="static"
+)
 
 UPLOAD_FOLDER = "uploads"
 
-# Criar pasta uploads se não existir
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+# Criar pastas
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs("static", exist_ok=True)
 
 @app.route("/")
 def lar():
@@ -18,18 +22,28 @@ def lar():
 @app.route("/perguntar", methods=["POST"])
 def perguntar():
 
-    pergunta = request.form.get("mensagem", "")
+    pergunta = request.form.get(
+        "mensagem",
+        ""
+    )
 
-    arquivo = request.files.get("imagem")
+    arquivo = request.files.get(
+        "imagem"
+    )
 
     caminho_imagem = None
 
-    # Se enviar imagem
+    # ===============================
+    # SE VEIO IMAGEM
+    # ===============================
+
     if arquivo:
 
         nome = (
             "upload_" +
-            datetime.now().strftime("%Y%m%d_%H%M%S") +
+            datetime.now().strftime(
+                "%Y%m%d_%H%M%S"
+            ) +
             ".png"
         )
 
@@ -38,9 +52,14 @@ def perguntar():
             nome
         )
 
-        arquivo.save(caminho_imagem)
+        arquivo.save(
+            caminho_imagem
+        )
 
-    # CHAMADA CORRETA
+    # ===============================
+    # CHAMAR JARBAS
+    # ===============================
+
     resposta = jarbas.responder(
         pergunta,
         caminho_imagem
@@ -51,6 +70,7 @@ def perguntar():
     })
 
 if __name__ == "__main__":
+
     app.run(
         host="0.0.0.0",
         port=5000
