@@ -61,7 +61,7 @@ body {
   margin-right: auto;
 }
 
-/* Área de entrada */
+/* Área entrada */
 #input-area {
   display: flex;
   padding: 10px;
@@ -88,7 +88,7 @@ button {
 
 /* Imagem */
 img.chat-img {
-  max-width: 150px;
+  max-width: 200px;
   border-radius: 10px;
   margin-top: 5px;
 }
@@ -131,7 +131,7 @@ const statusDiv = document.getElementById("status");
 let recognition;
 
 /* ===================== */
-/* ADICIONAR MENSAGEM */
+/* ADICIONAR TEXTO */
 /* ===================== */
 
 function adicionarMensagem(texto, tipo) {
@@ -153,7 +153,7 @@ function adicionarMensagem(texto, tipo) {
 /* ADICIONAR IMAGEM */
 /* ===================== */
 
-function adicionarImagem(file, tipo) {
+function adicionarImagemSrc(src, tipo) {
 
   const msgDiv = document.createElement("div");
 
@@ -164,13 +164,27 @@ function adicionarImagem(file, tipo) {
   const img = document.createElement("img");
 
   img.className = "chat-img";
-  img.src = URL.createObjectURL(file);
+
+  img.src = src;
 
   msgDiv.appendChild(img);
 
   chatBox.appendChild(msgDiv);
 
   chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+/* ===================== */
+/* ADICIONAR IMAGEM USER */
+/* ===================== */
+
+function adicionarImagemUser(file) {
+
+  adicionarImagemSrc(
+    URL.createObjectURL(file),
+    "user"
+  );
+
 }
 
 /* ===================== */
@@ -189,7 +203,7 @@ function enviar() {
   }
 
   if (imagem) {
-    adicionarImagem(imagem, "user");
+    adicionarImagemUser(imagem);
   }
 
   statusDiv.innerText = "Jarbas pensando...";
@@ -206,24 +220,50 @@ function enviar() {
     method: "POST",
     body: formData
   })
+
   .then(r => r.json())
+
   .then(d => {
 
-    adicionarMensagem(d.resposta, "jarbas");
+    const resposta = d.resposta;
 
-    falar(d.resposta);
+    /* SE FOR IMAGEM */
+    if (resposta.startsWith("/static/")) {
 
-    statusDiv.innerText = "Jarbas pronto.";
+      adicionarImagemSrc(
+        resposta,
+        "jarbas"
+      );
+
+    }
+
+    /* SE FOR TEXTO */
+    else {
+
+      adicionarMensagem(
+        resposta,
+        "jarbas"
+      );
+
+      falar(resposta);
+
+    }
+
+    statusDiv.innerText =
+      "Jarbas pronto.";
 
   })
+
   .catch(() => {
 
-    statusDiv.innerText = "Erro ao falar com Jarbas.";
+    statusDiv.innerText =
+      "Erro ao falar com Jarbas.";
 
   });
 
   msgInput.value = "";
   inputImagem.value = "";
+
 }
 
 /* ===================== */
@@ -232,7 +272,11 @@ function enviar() {
 
 function falar(texto) {
 
-  const voz = new SpeechSynthesisUtterance(texto);
+  if (texto.startsWith("/static/"))
+    return;
+
+  const voz =
+    new SpeechSynthesisUtterance(texto);
 
   voz.lang = "pt-BR";
 
@@ -244,7 +288,10 @@ function falar(texto) {
 /* MICROFONE */
 /* ===================== */
 
-if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+if (
+  "webkitSpeechRecognition" in window ||
+  "SpeechRecognition" in window
+) {
 
   const SpeechRecognition =
     window.SpeechRecognition ||
@@ -256,7 +303,8 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
 
   recognition.onstart = () => {
 
-    statusDiv.innerText = "Ouvindo você...";
+    statusDiv.innerText =
+      "Ouvindo você...";
 
   };
 
@@ -265,7 +313,8 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
     const textoFalado =
       event.results[0][0].transcript;
 
-    msgInput.value = textoFalado;
+    msgInput.value =
+      textoFalado;
 
     enviar();
 
