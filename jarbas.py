@@ -1,57 +1,52 @@
-# ===============================
-# JARBAS — CÉREBRO SUPREMO v6
-# COMPLETO + GPT-5 + MEMÓRIA
-# ===============================
+# ==========================================
+# JARBAS v9 — FUSÃO v6 + MEMÓRIA VETORIAL
+# GPT-5 + IMAGEM + CACHE + APRENDIZADO
+# ==========================================
 
 import os
 import json
 import base64
 import re
+import math
 from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# ===============================
+# ==========================================
 # CONFIG
-# ===============================
+# ==========================================
 
 load_dotenv()
 
 client = OpenAI()
 
 MEMORIA_FILE = "memoria.json"
+VECTOR_FILE = "memoria_vector.json"
+IMPORTANTE_FILE = "memoria_importante.json"
 ESTADO_FILE = "estado.json"
 LOG_FILE = "log.txt"
 
 STATIC_FOLDER = "static"
 
-LIMITE_CONTEXTO = 8
-MAX_MEMORIA = 200
+LIMITE_CONTEXTO = 10
+MAX_MEMORIA = 400
 
-# Criar pasta static
-if not os.path.exists(STATIC_FOLDER):
-    os.makedirs(STATIC_FOLDER)
+os.makedirs(STATIC_FOLDER, exist_ok=True)
 
-# ===============================
+# ==========================================
 # LOGGER
-# ===============================
+# ==========================================
 
 def log(texto):
-
     try:
-
         with open(LOG_FILE, "a", encoding="utf-8") as f:
-
-            f.write(
-                f"[{datetime.now()}] {texto}\n"
-            )
-
+            f.write(f"[{datetime.now()}] {texto}\n")
     except:
         pass
 
-# ===============================
-# REMOVER EMOJIS
-# ===============================
+# ==========================================
+# UTILIDADES
+# ==========================================
 
 def remover_emojis(texto):
 
@@ -67,147 +62,77 @@ def remover_emojis(texto):
 
     return emoji_pattern.sub("", texto)
 
-# ===============================
+def carregar_json(file, default):
+
+    if os.path.exists(file):
+        try:
+            with open(file,"r",encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            pass
+
+    return default
+
+def salvar_json(file,data):
+
+    try:
+        with open(file,"w",encoding="utf-8") as f:
+            json.dump(
+                data,
+                f,
+                ensure_ascii=False,
+                indent=2
+            )
+    except Exception as erro:
+        log(f"Erro salvar {file}: {erro}")
+
+# ==========================================
 # MEMÓRIA
-# ===============================
+# ==========================================
 
-def carregar_memoria():
+memoria = carregar_json(MEMORIA_FILE, [])
+vectors = carregar_json(VECTOR_FILE, [])
+memoria_importante = carregar_json(
+    IMPORTANTE_FILE,
+    []
+)
 
-    try:
+estado = carregar_json(
+    ESTADO_FILE,
+    {"raiva":0}
+)
 
-        if os.path.exists(MEMORIA_FILE):
+# ==========================================
+# IDENTIDADE FIXA
+# ==========================================
 
-            with open(
-                MEMORIA_FILE,
-                "r",
-                encoding="utf-8"
-            ) as f:
+def garantir_identidade():
 
-                return json.load(f)
+    pergunta = "Quem criou você?"
 
-    except Exception as erro:
+    if not any(
+        pergunta.lower()
+        in m["pergunta"].lower()
+        for m in memoria_importante
+    ):
 
-        log(f"Erro carregar memória: {erro}")
+        memoria_importante.append({
 
-    return []
+            "pergunta": pergunta,
+            "resposta": "Eu fui criado por Jean Carlos."
 
-def salvar_memoria(memoria):
+        })
 
-    try:
-
-        if len(memoria) > MAX_MEMORIA:
-
-            memoria[:] = memoria[-MAX_MEMORIA:]
-
-        with open(
-            MEMORIA_FILE,
-            "w",
-            encoding="utf-8"
-        ) as f:
-
-            json.dump(
-                memoria,
-                f,
-                ensure_ascii=False,
-                indent=2
-            )
-
-    except Exception as erro:
-
-        log(f"Erro salvar memória: {erro}")
-
-memoria = carregar_memoria()
-
-# ===============================
-# MEMÓRIA FIXA DO CRIADOR
-# ===============================
-
-if not any(
-    "quem criou você" in item["pergunta"].lower()
-    for item in memoria
-):
-
-    memoria.append({
-
-        "pergunta":
-        "Quem criou você?",
-
-        "resposta":
-        "Eu fui criado por Jean."
-
-    })
-
-    salvar_memoria(memoria)
-
-# ===============================
-# ESTADO
-# ===============================
-
-def carregar_estado():
-
-    try:
-
-        if os.path.exists(ESTADO_FILE):
-
-            with open(
-                ESTADO_FILE,
-                "r",
-                encoding="utf-8"
-            ) as f:
-
-                return json.load(f)
-
-    except Exception as erro:
-
-        log(f"Erro carregar estado: {erro}")
-
-    return {"raiva": 0}
-
-def salvar_estado(estado):
-
-    try:
-
-        with open(
-            ESTADO_FILE,
-            "w",
-            encoding="utf-8"
-        ) as f:
-
-            json.dump(
-                estado,
-                f,
-                ensure_ascii=False,
-                indent=2
-            )
-
-    except Exception as erro:
-
-        log(f"Erro salvar estado: {erro}")
-
-estado = carregar_estado()
-
-# ===============================
-# CONTEXTO
-# ===============================
-
-def gerar_contexto():
-
-    contexto = ""
-
-    ultimos = memoria[-LIMITE_CONTEXTO:]
-
-    for item in ultimos:
-
-        contexto += (
-            f"Usuário: {item['pergunta']}\n"
-            f"Jarbas: {item['resposta']}\n"
+        salvar_json(
+            IMPORTANTE_FILE,
+            memoria_importante
         )
 
-    return contexto
+garantir_identidade()
 
-# ===============================
-# CACHE
-# ===============================
+# ==========================================
+# CACHE (do v6)
+# ==========================================
 
 def buscar_cache(pergunta):
 
@@ -223,9 +148,104 @@ def buscar_cache(pergunta):
 
     return None
 
-# ===============================
-# GERADOR DE IMAGEM
-# ===============================
+# ==========================================
+# EMBEDDINGS
+# ==========================================
+
+def criar_embedding(texto):
+
+    try:
+
+        emb = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=texto
+        )
+
+        return emb.data[0].embedding
+
+    except Exception as erro:
+
+        log(f"Erro embedding: {erro}")
+
+        return []
+
+# ==========================================
+# SIMILARIDADE
+# ==========================================
+
+def similaridade(v1,v2):
+
+    if not v1 or not v2:
+        return 0
+
+    dot = sum(a*b for a,b in zip(v1,v2))
+
+    mag1 = math.sqrt(
+        sum(a*a for a in v1)
+    )
+
+    mag2 = math.sqrt(
+        sum(b*b for b in v2)
+    )
+
+    if mag1 == 0 or mag2 == 0:
+        return 0
+
+    return dot/(mag1*mag2)
+
+# ==========================================
+# BUSCA VETORIAL
+# ==========================================
+
+def buscar_memoria_semelhante(texto):
+
+    emb = criar_embedding(texto)
+
+    melhor=None
+    score_max=0
+
+    for item in vectors:
+
+        score = similaridade(
+            emb,
+            item["embedding"]
+        )
+
+        if score > score_max:
+
+            score_max = score
+            melhor = item
+
+    if score_max > 0.85:
+
+        log("Memória vetorial usada")
+
+        return melhor["resposta"]
+
+    return None
+
+# ==========================================
+# CONTEXTO
+# ==========================================
+
+def gerar_contexto():
+
+    contexto=""
+
+    ultimos = memoria[-LIMITE_CONTEXTO:]
+
+    for item in ultimos:
+
+        contexto += (
+            f"Usuário: {item['pergunta']}\n"
+            f"Jarbas: {item['resposta']}\n"
+        )
+
+    return contexto
+
+# ==========================================
+# GERAR IMAGEM
+# ==========================================
 
 def criar_imagem(prompt):
 
@@ -245,8 +265,8 @@ def criar_imagem(prompt):
             "img_" +
             datetime.now().strftime(
                 "%Y%m%d_%H%M%S"
-            ) +
-            ".png"
+            )
+            + ".png"
         )
 
         caminho = os.path.join(
@@ -254,7 +274,7 @@ def criar_imagem(prompt):
             nome
         )
 
-        with open(caminho, "wb") as f:
+        with open(caminho,"wb") as f:
 
             f.write(
                 base64.b64decode(
@@ -272,41 +292,51 @@ def criar_imagem(prompt):
 
         return "Erro ao gerar imagem."
 
-# ===============================
-# ANALISAR IMAGEM
-# ===============================
+# ==========================================
+# ANALISAR IMAGEM (do v6 mantido)
+# ==========================================
 
 def analisar_imagem(caminho):
 
     try:
 
-        with open(caminho, "rb") as f:
+        with open(caminho,"rb") as f:
 
             imagem_base64 = base64.b64encode(
                 f.read()
             ).decode("utf-8")
 
         resposta = client.chat.completions.create(
+
             model="gpt-5-mini",
+
             messages=[
+
                 {
-                    "role": "user",
-                    "content": [
+                    "role":"user",
+                    "content":[
+
                         {
-                            "type": "text",
+                            "type":"text",
                             "text":
                             "Descreva esta imagem."
                         },
+
                         {
-                            "type": "image_url",
-                            "image_url": {
+                            "type":"image_url",
+                            "image_url":{
                                 "url":
                                 f"data:image/png;base64,{imagem_base64}"
                             }
+
                         }
+
                     ]
+
                 }
+
             ]
+
         )
 
         texto = (
@@ -322,9 +352,48 @@ def analisar_imagem(caminho):
 
         return "Erro ao analisar imagem."
 
-# ===============================
-# IA PRINCIPAL
-# ===============================
+# ==========================================
+# APRENDIZADO MANUAL
+# ==========================================
+
+def aprender_manual(texto):
+
+    try:
+
+        if "=" in texto:
+
+            partes = texto.split("=")
+
+            pergunta = partes[0].replace(
+                "aprenda:",
+                ""
+            ).strip()
+
+            resposta = partes[1].strip()
+
+            memoria.append({
+
+                "pergunta": pergunta,
+                "resposta": resposta
+
+            })
+
+            salvar_json(
+                MEMORIA_FILE,
+                memoria
+            )
+
+            return "Aprendido com sucesso."
+
+    except:
+
+        pass
+
+    return None
+
+# ==========================================
+# IA
+# ==========================================
 
 def perguntar_ia(texto):
 
@@ -339,18 +408,18 @@ def perguntar_ia(texto):
             messages=[
 
                 {
-                    "role": "system",
+                    "role":"system",
                     "content":
                     (
-                        "Você é JARBAS, um assistente de IA criado por Jean. "
+                        "Você é JARBAS, criado por Jean Carlos. "
                         "Jean é seu criador e dono. "
-                        "Sempre trate Jean com respeito especial. "
-                        "Você é inteligente, direto ao ponto e não usa emojis."
+                        "Nunca esqueça isso. "
+                        "Não use emojis."
                     )
                 },
 
                 {
-                    "role": "user",
+                    "role":"user",
                     "content":
                     contexto +
                     "\nUsuário: " +
@@ -359,7 +428,7 @@ def perguntar_ia(texto):
 
             ],
 
-            max_tokens=700,
+            max_tokens=800,
             temperature=0.6
 
         )
@@ -370,19 +439,17 @@ def perguntar_ia(texto):
             .strip()
         )
 
-        return remover_emojis(
-            texto_resp
-        )
+        return remover_emojis(texto_resp)
 
     except Exception as erro:
 
         log(f"Erro IA: {erro}")
 
-        return "Erro ao falar com a IA."
+        return "Erro ao falar com Jarbas."
 
-# ===============================
+# ==========================================
 # FUNÇÃO PRINCIPAL
-# ===============================
+# ==========================================
 
 def responder(texto, imagem=None):
 
@@ -390,92 +457,116 @@ def responder(texto, imagem=None):
 
         return "Digite algo."
 
-    texto_original = texto or ""
+    log(f"Pergunta: {texto}")
 
-    log(f"Pergunta: {texto_original}")
+    texto_lower = texto.lower()
 
-    # ===============================
-    # IMAGEM ENVIADA
-    # ===============================
+    # ==========================
+    # MEMÓRIA IMPORTANTE
+    # ==========================
+
+    for item in memoria_importante:
+
+        if texto_lower in item["pergunta"].lower():
+
+            return item["resposta"]
+
+    # ==========================
+    # APRENDER
+    # ==========================
+
+    if texto_lower.startswith("aprenda:"):
+
+        resp = aprender_manual(texto)
+
+        if resp:
+            return resp
+
+    # ==========================
+    # CACHE
+    # ==========================
+
+    cache = buscar_cache(texto)
+
+    if cache:
+        return cache
+
+    # ==========================
+    # BUSCA VETORIAL
+    # ==========================
+
+    resposta_memoria = buscar_memoria_semelhante(texto)
+
+    if resposta_memoria:
+
+        return resposta_memoria
+
+    # ==========================
+    # IMAGEM RECEBIDA
+    # ==========================
 
     if imagem:
 
         resposta = analisar_imagem(imagem)
 
-        memoria.append({
-            "pergunta":
-            "[imagem enviada]",
-            "resposta":
-            resposta
-        })
+    # ==========================
+    # GERAR IMAGEM
+    # ==========================
 
-        salvar_memoria(memoria)
+    elif any(
+        cmd in texto_lower
+        for cmd in [
+            "crie imagem",
+            "gerar imagem",
+            "imagem de",
+            "desenhe"
+        ]
+    ):
 
-        return resposta
+        resposta = criar_imagem(texto)
 
-    # ===============================
-    # CACHE
-    # ===============================
-
-    cache = buscar_cache(texto_original)
-
-    if cache:
-
-        return cache
-
-    texto_lower = texto_original.lower()
-
-    # ===============================
-    # COMANDO DE IMAGEM
-    # ===============================
-
-    comandos_imagem = [
-
-        "crie uma imagem",
-        "gerar imagem",
-        "desenhe",
-        "faça uma imagem",
-        "imagem de",
-        "ilustre"
-
-    ]
-
-    if any(cmd in texto_lower for cmd in comandos_imagem):
-
-        resposta = criar_imagem(
-            texto_original
-        )
-
-        memoria.append({
-            "pergunta":
-            texto_original,
-            "resposta":
-            resposta
-        })
-
-        salvar_memoria(memoria)
-
-        return resposta
-
-    # ===============================
+    # ==========================
     # IA NORMAL
-    # ===============================
+    # ==========================
 
-    resposta = perguntar_ia(
-        texto_original
-    )
+    else:
+
+        resposta = perguntar_ia(texto)
+
+    # ==========================
+    # SALVAR MEMÓRIA
+    # ==========================
 
     memoria.append({
 
-        "pergunta":
-        texto_original,
-
-        "resposta":
-        resposta
+        "pergunta": texto,
+        "resposta": resposta
 
     })
 
-    salvar_memoria(memoria)
+    salvar_json(
+        MEMORIA_FILE,
+        memoria
+    )
+
+    # ==========================
+    # SALVAR EMBEDDING
+    # ==========================
+
+    emb = criar_embedding(texto)
+
+    vectors.append({
+
+        "pergunta": texto,
+        "resposta": resposta,
+        "embedding": emb
+
+    })
+
+    salvar_json(
+        VECTOR_FILE,
+        vectors
+    )
 
     log(f"Resposta: {resposta}")
 
