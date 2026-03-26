@@ -1,6 +1,6 @@
 # ===============================
-# JARBAS — CÉREBRO SUPREMO v5
-# COMPLETO E AVANÇADO
+# JARBAS — CÉREBRO SUPREMO v6
+# COMPLETO + GPT-5 + MEMÓRIA
 # ===============================
 
 import os
@@ -26,7 +26,7 @@ LOG_FILE = "log.txt"
 STATIC_FOLDER = "static"
 
 LIMITE_CONTEXTO = 8
-MAX_MEMORIA = 100
+MAX_MEMORIA = 200
 
 # Criar pasta static
 if not os.path.exists(STATIC_FOLDER):
@@ -47,7 +47,6 @@ def log(texto):
             )
 
     except:
-
         pass
 
 # ===============================
@@ -120,6 +119,27 @@ def salvar_memoria(memoria):
 memoria = carregar_memoria()
 
 # ===============================
+# MEMÓRIA FIXA DO CRIADOR
+# ===============================
+
+if not any(
+    "quem criou você" in item["pergunta"].lower()
+    for item in memoria
+):
+
+    memoria.append({
+
+        "pergunta":
+        "Quem criou você?",
+
+        "resposta":
+        "Eu fui criado por Jean."
+
+    })
+
+    salvar_memoria(memoria)
+
+# ===============================
 # ESTADO
 # ===============================
 
@@ -186,7 +206,7 @@ def gerar_contexto():
     return contexto
 
 # ===============================
-# CACHE INTELIGENTE
+# CACHE
 # ===============================
 
 def buscar_cache(pergunta):
@@ -267,14 +287,15 @@ def analisar_imagem(caminho):
             ).decode("utf-8")
 
         resposta = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             messages=[
                 {
                     "role": "user",
                     "content": [
                         {
                             "type": "text",
-                            "text": "Descreva esta imagem."
+                            "text":
+                            "Descreva esta imagem."
                         },
                         {
                             "type": "image_url",
@@ -312,19 +333,21 @@ def perguntar_ia(texto):
         contexto = gerar_contexto()
 
         resposta = client.chat.completions.create(
-            model="gpt-4o-mini",
+
+            model="gpt-5-mini",
+
             messages=[
-                
-                    {
-    "role": "system",
-    "content":
-    (
-        "Você é JARBAS, um assistente de IA criado por Jean. "
-        "Jean é seu criador e dono. "
-        "Sempre trate Jean com respeito especial. "
-        "Você é inteligente, direto ao ponto e não usa emojis."
-    )
-},
+
+                {
+                    "role": "system",
+                    "content":
+                    (
+                        "Você é JARBAS, um assistente de IA criado por Jean. "
+                        "Jean é seu criador e dono. "
+                        "Sempre trate Jean com respeito especial. "
+                        "Você é inteligente, direto ao ponto e não usa emojis."
+                    )
+                },
 
                 {
                     "role": "user",
@@ -335,8 +358,10 @@ def perguntar_ia(texto):
                 }
 
             ],
+
             max_tokens=700,
-            temperature=0.7
+            temperature=0.6
+
         )
 
         texto_resp = (
@@ -401,7 +426,7 @@ def responder(texto, imagem=None):
     texto_lower = texto_original.lower()
 
     # ===============================
-    # COMANDOS DE IMAGEM
+    # COMANDO DE IMAGEM
     # ===============================
 
     comandos_imagem = [
@@ -429,34 +454,6 @@ def responder(texto, imagem=None):
         })
 
         salvar_memoria(memoria)
-
-        return resposta
-
-    # ===============================
-    # SISTEMA RAIVA
-    # ===============================
-
-    if "jarvis" in texto_lower:
-
-        estado["raiva"] += 1
-
-        respostas = [
-
-            "Meu nome é Jarbas.",
-            "Já falei que é Jarbas.",
-            "PARA. É JARBAS.",
-            "Tá testando minha paciência."
-
-        ]
-
-        resposta = respostas[
-            min(
-                estado["raiva"],
-                len(respostas) - 1
-            )
-        ]
-
-        salvar_estado(estado)
 
         return resposta
 
