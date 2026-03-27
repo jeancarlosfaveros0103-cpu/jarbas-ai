@@ -633,6 +633,7 @@ apagar usuario nome
 
 def responder(
     pergunta,
+    caminho_imagem=None,
     usuario="desconhecido"
 ):
 
