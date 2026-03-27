@@ -1,7 +1,9 @@
 # ===============================
-# 🧠 JARBAS v11 LIMPO (CORRIGIDO)
-# Memória por Usuário + Vetorial
-# Imagem + Aprendizado
+# 🧠 JARBAS v12 COMPLETO
+# Memória Inteligente
+# Painel Admin
+# Memória Vetorial
+# Imagens
 # Criado por Jean
 # ===============================
 
@@ -29,6 +31,9 @@ os.makedirs(PASTA_UPLOAD, exist_ok=True)
 
 ESTADO_FILE = "estado.json"
 LOG_FILE = "log.txt"
+ADMIN_SENHA = "311514"
+
+estado_admin = {}
 
 # ===============================
 # UTIL NOME
@@ -42,12 +47,56 @@ def primeiro_nome(nome):
     return nome.split()[0]
 
 # ===============================
+# MEMÓRIA NOME
+# ===============================
+
+def aprender_nome(pergunta, usuario):
+
+    pergunta_lower = pergunta.lower()
+
+    if "meu nome é" in pergunta_lower:
+
+        nome = pergunta_lower.replace(
+            "meu nome é",
+            ""
+        ).strip().title()
+
+        nomes = carregar_json(
+            "nomes.json",
+            {}
+        )
+
+        nomes[usuario] = nome
+
+        salvar_json(
+            "nomes.json",
+            nomes
+        )
+
+        return f"Entendi! Vou lembrar que seu nome é {nome}."
+
+    return None
+
+
+def obter_nome(usuario):
+
+    nomes = carregar_json(
+        "nomes.json",
+        {}
+    )
+
+    return nomes.get(
+        usuario,
+        primeiro_nome(usuario)
+    )
+
+# ===============================
 # IDENTIDADE
 # ===============================
 
 def identidade_usuario(usuario):
 
-    nome_curto = primeiro_nome(usuario)
+    nome_curto = obter_nome(usuario)
 
     if nome_curto.lower() == "jean":
 
@@ -86,7 +135,7 @@ def arquivo_vector(usuario):
     return f"memoria_vector_{usuario}.json"
 
 # ===============================
-# UTIL JSON
+# JSON
 # ===============================
 
 def carregar_json(arquivo, padrao):
@@ -102,6 +151,7 @@ def carregar_json(arquivo, padrao):
             return json.load(f)
 
     return padrao
+
 
 def salvar_json(arquivo, dados):
 
@@ -166,6 +216,7 @@ def gerar_embedding(texto):
     )
 
     return resp.data[0].embedding
+
 
 def similaridade(v1, v2):
 
@@ -300,6 +351,69 @@ def buscar_memorias_semelhantes(
     return melhores
 
 # ===============================
+# PAINEL ADMIN
+# ===============================
+
+def verificar_admin(pergunta, usuario):
+
+    pergunta_lower = pergunta.lower()
+
+    if pergunta_lower == "painel admin01":
+
+        estado_admin[usuario] = "aguardando"
+
+        return "Digite a senha do admin:"
+
+    if estado_admin.get(usuario) == "aguardando":
+
+        if pergunta == ADMIN_SENHA:
+
+            estado_admin[usuario] = "logado"
+
+            return mostrar_painel_admin()
+
+        else:
+
+            estado_admin.pop(usuario, None)
+
+            return "Senha incorreta."
+
+    return None
+
+
+def mostrar_painel_admin():
+
+    arquivos = os.listdir()
+
+    usuarios = []
+
+    for arq in arquivos:
+
+        if arq.startswith("memoria_"):
+
+            nome = arq.replace(
+                "memoria_",
+                ""
+            ).replace(
+                ".json",
+                ""
+            )
+
+            usuarios.append(nome)
+
+    if not usuarios:
+
+        return "Nenhum usuário encontrado."
+
+    texto = "📊 USUÁRIOS CADASTRADOS:\n\n"
+
+    for u in usuarios:
+
+        texto += f"- {u}\n"
+
+    return texto
+
+# ===============================
 # GERAR IMAGEM
 # ===============================
 
@@ -367,6 +481,26 @@ def responder(
             f"{usuario}: {pergunta}"
         )
 
+        # ADMIN
+
+        resposta_admin = verificar_admin(
+            pergunta,
+            usuario
+        )
+
+        if resposta_admin:
+            return resposta_admin
+
+        # MEMÓRIA NOME
+
+        resposta_nome = aprender_nome(
+            pergunta,
+            usuario
+        )
+
+        if resposta_nome:
+            return resposta_nome
+
         # GERAR IMAGEM
 
         if "crie imagem" in pergunta.lower():
@@ -402,8 +536,6 @@ def responder(
                 f"Usuário: {item['pergunta']}\n"
                 f"Jarbas: {item['resposta']}\n"
             )
-
-        # CHAMADA IA
 
         resposta = client.chat.completions.create(
 
