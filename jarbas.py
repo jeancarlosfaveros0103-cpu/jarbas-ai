@@ -1,5 +1,5 @@
 # ===============================
-# 🧠 JARBAS v11 LIMPO
+# 🧠 JARBAS v11 ESTÁVEL
 # Memória por Usuário + Vetorial
 # Imagem + Aprendizado
 # Criado por Jean
@@ -14,10 +14,12 @@ from datetime import datetime
 from openai import OpenAI
 
 # ===============================
-# CONFIG
+# CONFIG OPENAI
 # ===============================
 
-client = OpenAI()
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
 
 PASTA_STATIC = "static"
 PASTA_UPLOAD = "uploads"
@@ -26,7 +28,6 @@ os.makedirs(PASTA_STATIC, exist_ok=True)
 os.makedirs(PASTA_UPLOAD, exist_ok=True)
 
 ESTADO_FILE = "estado.json"
-APRENDIZADO_FILE = "aprendizado.json"
 LOG_FILE = "log.txt"
 
 # ===============================
@@ -296,15 +297,11 @@ def gerar_imagem(prompt):
         imagem_base64 = resposta.data[0].b64_json
 
         nome = (
-
             "img_" +
-
             datetime.now().strftime(
                 "%Y%m%d_%H%M%S"
             ) +
-
             ".png"
-
         )
 
         caminho = os.path.join(
@@ -327,9 +324,7 @@ def gerar_imagem(prompt):
 
     except Exception as e:
 
-        logar(
-            f"Erro imagem: {e}"
-        )
+        logar(f"Erro imagem: {e}")
 
         return "Erro ao gerar imagem."
 
@@ -351,9 +346,7 @@ def responder(
             f"{usuario}: {pergunta}"
         )
 
-        # =========================
         # GERAR IMAGEM
-        # =========================
 
         if "crie imagem" in pergunta.lower():
 
@@ -362,13 +355,9 @@ def responder(
                 ""
             )
 
-            return gerar_imagem(
-                prompt
-            )
+            return gerar_imagem(prompt)
 
-        # =========================
-        # MEMÓRIA VETORIAL
-        # =========================
+        # MEMÓRIAS
 
         memorias = buscar_memorias_semelhantes(
             pergunta,
@@ -389,20 +378,15 @@ def responder(
         for item in memoria_usuario[-5:]:
 
             contexto += (
-
                 f"Usuário: {item['pergunta']}\n"
-
                 f"Jarbas: {item['resposta']}\n"
-
             )
 
-        # =========================
         # CHAMADA IA
-        # =========================
 
         resposta = client.chat.completions.create(
 
-            model="gpt-5-mini",
+            model="gpt-4.1-mini",
 
             messages=[
 
@@ -454,8 +438,6 @@ def responder(
 
     except Exception as e:
 
-        logar(
-            f"Erro IA: {e}"
-        )
+        logar(f"Erro IA: {e}")
 
         return "Erro ao falar com Jarbas."
