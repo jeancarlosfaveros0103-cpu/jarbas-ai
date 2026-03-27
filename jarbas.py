@@ -47,6 +47,52 @@ def primeiro_nome(nome):
     return nome.split()[0]
 
 # ===============================
+# JSON
+# ===============================
+
+def carregar_json(arquivo, padrao):
+
+    if os.path.exists(arquivo):
+
+        with open(
+            arquivo,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            return json.load(f)
+
+    return padrao
+
+
+def salvar_json(arquivo, dados):
+
+    with open(
+        arquivo,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        json.dump(
+            dados,
+            f,
+            indent=2,
+            ensure_ascii=False
+        )
+
+def logar(texto):
+
+    with open(
+        LOG_FILE,
+        "a",
+        encoding="utf-8"
+    ) as f:
+
+        f.write(
+            f"[{datetime.now()}] {texto}\n"
+        )
+
+# ===============================
 # MEMÓRIA NOME
 # ===============================
 
@@ -98,28 +144,12 @@ def identidade_usuario(usuario):
 
     nome_curto = obter_nome(usuario)
 
-    if nome_curto.lower() == "jean":
-
-        return f"""
-Você é Jarbas.
-
-Você foi criado por Jean.
-
-Jean é seu criador principal.
-
-Sempre trate Jean com prioridade.
-
-Nunca diga que foi criado pela OpenAI.
-"""
-
     return f"""
 Você é Jarbas, uma inteligência artificial criada por Jean.
 
 O nome do usuário é {nome_curto}.
 
 Sempre chame o usuário pelo primeiro nome.
-
-Nunca diga que foi criado pela OpenAI.
 
 Seu objetivo é ajudar o usuário.
 """
@@ -133,52 +163,6 @@ def arquivo_memoria(usuario):
 
 def arquivo_vector(usuario):
     return f"memoria_vector_{usuario}.json"
-
-# ===============================
-# JSON
-# ===============================
-
-def carregar_json(arquivo, padrao):
-
-    if os.path.exists(arquivo):
-
-        with open(
-            arquivo,
-            "r",
-            encoding="utf-8"
-        ) as f:
-
-            return json.load(f)
-
-    return padrao
-
-
-def salvar_json(arquivo, dados):
-
-    with open(
-        arquivo,
-        "w",
-        encoding="utf-8"
-    ) as f:
-
-        json.dump(
-            dados,
-            f,
-            indent=2,
-            ensure_ascii=False
-        )
-
-def logar(texto):
-
-    with open(
-        LOG_FILE,
-        "a",
-        encoding="utf-8"
-    ) as f:
-
-        f.write(
-            f"[{datetime.now()}] {texto}\n"
-        )
 
 # ===============================
 # ESTADO
@@ -351,6 +335,49 @@ def buscar_memorias_semelhantes(
     return melhores
 
 # ===============================
+# 📊 CONTAR MENSAGENS
+# ===============================
+
+def contar_mensagens_por_usuario():
+
+    arquivos = os.listdir()
+
+    resultado = "📊 MENSAGENS POR USUÁRIO:\n\n"
+
+    encontrou = False
+
+    for arq in arquivos:
+
+        if arq.startswith("memoria_") and arq.endswith(".json"):
+
+            usuario = arq.replace(
+                "memoria_",
+                ""
+            ).replace(
+                ".json",
+                ""
+            )
+
+            memoria = carregar_json(
+                arq,
+                []
+            )
+
+            quantidade = len(memoria)
+
+            resultado += (
+                f"👤 {usuario}: "
+                f"{quantidade} mensagens\n"
+            )
+
+            encontrou = True
+
+    if not encontrou:
+        return "Nenhuma memória encontrada."
+
+    return resultado
+
+# ===============================
 # PAINEL ADMIN
 # ===============================
 
@@ -377,6 +404,16 @@ def verificar_admin(pergunta, usuario):
             estado_admin.pop(usuario, None)
 
             return "Senha incorreta."
+
+    if pergunta_lower == "ver mensagens":
+
+        if estado_admin.get(usuario) == "logado":
+
+            return contar_mensagens_por_usuario()
+
+        else:
+
+            return "Você precisa entrar no painel admin primeiro."
 
     return None
 
@@ -411,57 +448,9 @@ def mostrar_painel_admin():
 
         texto += f"- {u}\n"
 
+    texto += "\nDigite 'ver mensagens' para ver quantas mensagens cada usuário tem."
+
     return texto
-
-# ===============================
-# GERAR IMAGEM
-# ===============================
-
-def gerar_imagem(prompt):
-
-    try:
-
-        resposta = client.images.generate(
-            model="gpt-image-1",
-            prompt=prompt,
-            size="1024x1024"
-        )
-
-        imagem_base64 = resposta.data[0].b64_json
-
-        nome = (
-            "img_" +
-            datetime.now().strftime(
-                "%Y%m%d_%H%M%S"
-            ) +
-            ".png"
-        )
-
-        caminho = os.path.join(
-            PASTA_STATIC,
-            nome
-        )
-
-        with open(
-            caminho,
-            "wb"
-        ) as f:
-
-            f.write(
-                base64.b64decode(
-                    imagem_base64
-                )
-            )
-
-        return f"Imagem criada: /static/{nome}"
-
-    except Exception as e:
-
-        logar(
-            f"Erro imagem: {e}"
-        )
-
-        return "Erro ao gerar imagem."
 
 # ===============================
 # IA PRINCIPAL
@@ -469,7 +458,6 @@ def gerar_imagem(prompt):
 
 def responder(
     pergunta,
-    caminho_imagem=None,
     usuario="desconhecido"
 ):
 
@@ -481,8 +469,6 @@ def responder(
             f"{usuario}: {pergunta}"
         )
 
-        # ADMIN
-
         resposta_admin = verificar_admin(
             pergunta,
             usuario
@@ -491,8 +477,6 @@ def responder(
         if resposta_admin:
             return resposta_admin
 
-        # MEMÓRIA NOME
-
         resposta_nome = aprender_nome(
             pergunta,
             usuario
@@ -500,19 +484,6 @@ def responder(
 
         if resposta_nome:
             return resposta_nome
-
-        # GERAR IMAGEM
-
-        if "crie imagem" in pergunta.lower():
-
-            prompt = pergunta.replace(
-                "crie imagem de",
-                ""
-            )
-
-            return gerar_imagem(prompt)
-
-        # MEMÓRIA
 
         memorias = buscar_memorias_semelhantes(
             pergunta,
