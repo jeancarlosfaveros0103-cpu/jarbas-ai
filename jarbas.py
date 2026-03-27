@@ -1,9 +1,10 @@
 # ===============================
-# 🧠 JARBAS v12 COMPLETO
+# 🧠 JARBAS v13 COMPLETO
 # Memória Inteligente
 # Painel Admin
 # Memória Vetorial
-# Imagens
+# Backup Automático
+# Gráfico de Uso
 # Criado por Jean
 # ===============================
 
@@ -11,6 +12,8 @@ import os
 import json
 import math
 import base64
+import zipfile
+
 from datetime import datetime
 
 from openai import OpenAI
@@ -25,18 +28,21 @@ client = OpenAI(
 
 PASTA_STATIC = "static"
 PASTA_UPLOAD = "uploads"
+PASTA_BACKUP = "backup"
 
 os.makedirs(PASTA_STATIC, exist_ok=True)
 os.makedirs(PASTA_UPLOAD, exist_ok=True)
+os.makedirs(PASTA_BACKUP, exist_ok=True)
 
 ESTADO_FILE = "estado.json"
 LOG_FILE = "log.txt"
+
 ADMIN_SENHA = "311514"
 
 estado_admin = {}
 
 # ===============================
-# UTIL NOME
+# UTIL
 # ===============================
 
 def primeiro_nome(nome):
@@ -80,6 +86,7 @@ def salvar_json(arquivo, dados):
             ensure_ascii=False
         )
 
+
 def logar(texto):
 
     with open(
@@ -91,6 +98,38 @@ def logar(texto):
         f.write(
             f"[{datetime.now()}] {texto}\n"
         )
+
+# ===============================
+# 📦 BACKUP AUTOMÁTICO
+# ===============================
+
+def criar_backup():
+
+    nome = (
+        "backup_" +
+        datetime.now().strftime(
+            "%Y%m%d_%H%M%S"
+        ) +
+        ".zip"
+    )
+
+    caminho = os.path.join(
+        PASTA_BACKUP,
+        nome
+    )
+
+    with zipfile.ZipFile(
+        caminho,
+        "w"
+    ) as zipf:
+
+        for arq in os.listdir():
+
+            if arq.endswith(".json"):
+
+                zipf.write(arq)
+
+    return nome
 
 # ===============================
 # MEMÓRIA NOME
@@ -252,6 +291,8 @@ def salvar_memoria(
         memoria
     )
 
+    criar_backup()
+
 # ===============================
 # MEMÓRIA VETORIAL
 # ===============================
@@ -286,6 +327,8 @@ def salvar_memoria_vetorial(
         arquivo_vector(usuario),
         memoria_vector
     )
+
+    criar_backup()
 
 def buscar_memorias_semelhantes(
     pergunta,
@@ -340,15 +383,13 @@ def buscar_memorias_semelhantes(
 
 def contar_mensagens_por_usuario():
 
-    arquivos = os.listdir()
-
     resultado = "📊 MENSAGENS POR USUÁRIO:\n\n"
 
     encontrou = False
 
-    for arq in arquivos:
+    for arq in os.listdir():
 
-        if arq.startswith("memoria_") and arq.endswith(".json"):
+        if arq.startswith("memoria_"):
 
             usuario = arq.replace(
                 "memoria_",
@@ -363,11 +404,9 @@ def contar_mensagens_por_usuario():
                 []
             )
 
-            quantidade = len(memoria)
-
             resultado += (
                 f"👤 {usuario}: "
-                f"{quantidade} mensagens\n"
+                f"{len(memoria)} mensagens\n"
             )
 
             encontrou = True
@@ -376,6 +415,123 @@ def contar_mensagens_por_usuario():
         return "Nenhuma memória encontrada."
 
     return resultado
+
+# ===============================
+# 🧹 LIMPAR MEMÓRIA
+# ===============================
+
+def limpar_memoria_usuario(nome):
+
+    salvar_json(
+        arquivo_memoria(nome),
+        []
+    )
+
+    salvar_json(
+        arquivo_vector(nome),
+        []
+    )
+
+    return f"🧹 Memória de {nome} limpa."
+
+# ===============================
+# 👤 APAGAR USUÁRIO
+# ===============================
+
+def apagar_usuario(nome):
+
+    arquivos = [
+
+        arquivo_memoria(nome),
+        arquivo_vector(nome)
+
+    ]
+
+    apagados = False
+
+    for arq in arquivos:
+
+        if os.path.exists(arq):
+
+            os.remove(arq)
+            apagados = True
+
+    if apagados:
+
+        return f"👤 Usuário {nome} apagado."
+
+    return "Usuário não encontrado."
+
+# ===============================
+# 📈 GRÁFICO
+# ===============================
+
+def gerar_grafico_uso():
+
+    try:
+
+        import matplotlib.pyplot as plt
+
+        usuarios = []
+        quantidades = []
+
+        for arq in os.listdir():
+
+            if arq.startswith("memoria_"):
+
+                usuario = arq.replace(
+                    "memoria_",
+                    ""
+                ).replace(
+                    ".json",
+                    ""
+                )
+
+                memoria = carregar_json(
+                    arq,
+                    []
+                )
+
+                usuarios.append(usuario)
+                quantidades.append(len(memoria))
+
+        if not usuarios:
+
+            return "Nenhum usuário encontrado."
+
+        plt.figure()
+
+        plt.bar(
+            usuarios,
+            quantidades
+        )
+
+        plt.title("Uso do Jarbas")
+
+        nome = (
+            "grafico_" +
+            datetime.now().strftime(
+                "%Y%m%d_%H%M%S"
+            ) +
+            ".png"
+        )
+
+        caminho = os.path.join(
+            PASTA_STATIC,
+            nome
+        )
+
+        plt.savefig(caminho)
+
+        plt.close()
+
+        return f"📈 Gráfico criado: /static/{nome}"
+
+    except Exception as e:
+
+        logar(f"Erro gráfico: {e}")
+
+        return "Erro ao gerar gráfico."
 
 # ===============================
 # PAINEL ADMIN
@@ -401,30 +557,45 @@ def verificar_admin(pergunta, usuario):
 
         else:
 
-            estado_admin.pop(usuario, None)
+            estado_admin.pop(usuario)
 
             return "Senha incorreta."
 
-    if pergunta_lower == "ver mensagens":
+    if estado_admin.get(usuario) == "logado":
 
-        if estado_admin.get(usuario) == "logado":
+        if pergunta_lower == "ver mensagens":
 
             return contar_mensagens_por_usuario()
 
-        else:
+        if pergunta_lower == "grafico uso":
 
-            return "Você precisa entrar no painel admin primeiro."
+            return gerar_grafico_uso()
+
+        if pergunta_lower.startswith("limpar memoria"):
+
+            nome = pergunta_lower.replace(
+                "limpar memoria",
+                ""
+            ).strip()
+
+            return limpar_memoria_usuario(nome)
+
+        if pergunta_lower.startswith("apagar usuario"):
+
+            nome = pergunta_lower.replace(
+                "apagar usuario",
+                ""
+            ).strip()
+
+            return apagar_usuario(nome)
 
     return None
 
-
 def mostrar_painel_admin():
-
-    arquivos = os.listdir()
 
     usuarios = []
 
-    for arq in arquivos:
+    for arq in os.listdir():
 
         if arq.startswith("memoria_"):
 
@@ -438,17 +609,21 @@ def mostrar_painel_admin():
 
             usuarios.append(nome)
 
-    if not usuarios:
-
-        return "Nenhum usuário encontrado."
-
     texto = "📊 USUÁRIOS CADASTRADOS:\n\n"
 
     for u in usuarios:
 
         texto += f"- {u}\n"
 
-    texto += "\nDigite 'ver mensagens' para ver quantas mensagens cada usuário tem."
+    texto += """
+
+Comandos disponíveis:
+
+ver mensagens
+grafico uso
+limpar memoria nome
+apagar usuario nome
+"""
 
     return texto
 
