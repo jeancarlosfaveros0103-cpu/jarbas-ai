@@ -1,5 +1,5 @@
 # ===============================
-# 🧠 JARBAS v11 ESTÁVEL
+# 🧠 JARBAS v11 LIMPO (CORRIGIDO)
 # Memória por Usuário + Vetorial
 # Imagem + Aprendizado
 # Criado por Jean
@@ -14,7 +14,7 @@ from datetime import datetime
 from openai import OpenAI
 
 # ===============================
-# CONFIG OPENAI
+# CONFIG
 # ===============================
 
 client = OpenAI(
@@ -31,27 +31,46 @@ ESTADO_FILE = "estado.json"
 LOG_FILE = "log.txt"
 
 # ===============================
+# UTIL NOME
+# ===============================
+
+def primeiro_nome(nome):
+
+    if not nome:
+        return "Usuário"
+
+    return nome.split()[0]
+
+# ===============================
 # IDENTIDADE
 # ===============================
 
 def identidade_usuario(usuario):
 
-    if usuario == "Jean":
+    nome_curto = primeiro_nome(usuario)
 
-        return """
-Você é Jarbas, uma inteligência artificial avançada.
+    if nome_curto.lower() == "jean":
+
+        return f"""
+Você é Jarbas.
 
 Você foi criado por Jean.
 
 Jean é seu criador principal.
 
 Sempre trate Jean com prioridade.
+
+Nunca diga que foi criado pela OpenAI.
 """
 
     return f"""
-Você é Jarbas, uma inteligência artificial avançada.
+Você é Jarbas, uma inteligência artificial criada por Jean.
 
-O usuário atual é {usuario}.
+O nome do usuário é {nome_curto}.
+
+Sempre chame o usuário pelo primeiro nome.
+
+Nunca diga que foi criado pela OpenAI.
 
 Seu objetivo é ajudar o usuário.
 """
@@ -67,7 +86,7 @@ def arquivo_vector(usuario):
     return f"memoria_vector_{usuario}.json"
 
 # ===============================
-# UTIL
+# UTIL JSON
 # ===============================
 
 def carregar_json(arquivo, padrao):
@@ -324,7 +343,9 @@ def gerar_imagem(prompt):
 
     except Exception as e:
 
-        logar(f"Erro imagem: {e}")
+        logar(
+            f"Erro imagem: {e}"
+        )
 
         return "Erro ao gerar imagem."
 
@@ -357,7 +378,7 @@ def responder(
 
             return gerar_imagem(prompt)
 
-        # MEMÓRIAS
+        # MEMÓRIA
 
         memorias = buscar_memorias_semelhantes(
             pergunta,
@@ -438,6 +459,8 @@ def responder(
 
     except Exception as e:
 
-        logar(f"Erro IA: {e}")
+        logar(
+            f"Erro IA: {e}"
+        )
 
         return "Erro ao falar com Jarbas."
