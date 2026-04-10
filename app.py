@@ -79,21 +79,35 @@ def login():
 
         conn.close()
 
+        print("USUARIO DO BANCO:", usuario)
+
         if usuario:
 
             user_id = usuario[0]
             nome = usuario[1]
             senha_hash = usuario[2]
 
+            print("VERIFICANDO SENHA...")
+
             if check_password_hash(
                 senha_hash,
                 senha
             ):
 
+                print("LOGIN OK:", nome)
+
                 session["usuario_id"] = user_id
                 session["usuario_nome"] = nome
 
                 return redirect(url_for("home"))
+
+            else:
+
+                print("SENHA ERRADA")
+
+        else:
+
+            print("USUARIO NÃO ENCONTRADO")
 
         flash("Email ou senha incorretos")
 
