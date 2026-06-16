@@ -1,28 +1,50 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jarbas AI - Login</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-
-<div class="container">
-    <div class="card">
-        <h1>JARBAS.AI</h1>
-
-        <form method="POST">
-            <input type="email" name="email" placeholder="Email" required>
-
-            <input type="password" name="senha" placeholder="Senha" required>
-
-            <button type="submit">Entrar</button>
-        </form>
-
-        <a href="/registro">Criar conta</a>
-    </div>
+<body><div id="container"><div id="orb-container">
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div id="orb"></div>
 </div>
 
-</body>
+<h1>JARBAS.AI</h1>
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<form method="POST" style="width:90%;max-width:380px;display:flex;flex-direction:column;gap:10px;">
+
+    <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        required>
+
+    <input
+        type="password"
+        name="senha"
+        placeholder="Senha"
+        required>
+
+    <button type="submit">
+        Entrar
+    </button>
+
+</form>
+
+<a href="/registro" style="color:#6ecbff;text-decoration:none;">
+    Criar conta
+</a>
+
+</div></body>
 </html>
