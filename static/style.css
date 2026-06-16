@@ -1,113 +1,132 @@
-body {
-  margin: 0;
-  height: 100vh;
-  background: radial-gradient(circle at center, #0b1220, #05070d);
-  color: white;
-  font-family: "Segoe UI", Arial, sans-serif;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-#container {
-  width: 100%;
-  max-width: 420px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
+body{
+    min-height:100vh;
+    background:radial-gradient(circle at center,#0b1220,#05070d);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-family:"Segoe UI",sans-serif;
+    color:white;
 }
 
-#orb-container {
-  position: relative;
-  width: 160px;
-  height: 160px;
+.container{
+    width:100%;
+    max-width:420px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:20px;
 }
 
-#orb {
-  width: 80px;
-  height: 80px;
-  background: radial-gradient(circle, #6ecbff, #0077ff);
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 25px #2a8cff;
-  z-index: 2;
+h1{
+    font-size:42px;
+    letter-spacing:2px;
+    color:#ffffff;
+    text-shadow:0 0 15px #0077ff;
 }
 
-.wave {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 2px solid rgba(100,170,255,0.3);
-  animation: pulse 4s infinite;
-  opacity: 0;
+.login-box{
+    width:100%;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:20px;
+    padding:25px;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
 }
 
-.wave:nth-child(1) { animation-delay: 0s; }
-.wave:nth-child(2) { animation-delay: 1.3s; }
-.wave:nth-child(3) { animation-delay: 2.6s; }
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.4);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1.4);
-    opacity: 0;
-  }
+.login-box input{
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:rgba(255,255,255,0.08);
+    color:white;
+    font-size:16px;
+    outline:none;
 }
 
-.active {
-  animation-duration: 1s !important;
-  opacity: 1;
+.login-box input::placeholder{
+    color:#cfd8dc;
 }
 
-#status {
-  font-size: 14px;
-  opacity: 0.7;
+.login-box button{
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,#0099ff,#0066ff);
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
 }
 
-#chat-box {
-  width: 90%;
-  max-width: 380px;
-  min-height: 120px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 12px;
-  padding: 14px;
-  overflow-y: auto;
-  font-size: 17px;
+.login-box button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 0 20px #0077ff;
 }
 
-#input-area {
-  width: 90%;
-  max-width: 380px;
-  display: flex;
-  gap: 8px;
+.login-box a{
+    text-align:center;
+    color:#7cc8ff;
+    text-decoration:none;
 }
 
-#input-area input {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-  font-size: 16px;
+#orb-container{
+    position:relative;
+    width:180px;
+    height:180px;
 }
 
-#input-area button {
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: none;
-  background: #0077ff;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
+#orb{
+    width:90px;
+    height:90px;
+    background:radial-gradient(circle,#6ecbff,#0077ff);
+    border-radius:50%;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 30px #2a8cff;
+    z-index:2;
+}
+
+.wave{
+    position:absolute;
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    border:2px solid rgba(100,170,255,0.3);
+    animation:pulse 4s infinite;
+}
+
+.wave:nth-child(1){
+    animation-delay:0s;
+}
+
+.wave:nth-child(2){
+    animation-delay:1.3s;
+}
+
+.wave:nth-child(3){
+    animation-delay:2.6s;
+}
+
+@keyframes pulse{
+    0%{
+        transform:scale(0.4);
+        opacity:0.8;
+    }
+
+    100%{
+        transform:scale(1.5);
+        opacity:0;
+    }
 }
