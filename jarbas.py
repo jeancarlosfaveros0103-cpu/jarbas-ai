@@ -635,9 +635,10 @@ def responder(
     pergunta,
     caminho_imagem=None,
     usuario="desconhecido"
-    if not usuario:
-    usuario = "Usuário"
 ):
+
+    if not usuario:
+        usuario = "Usuário"
 
     try:
 
