@@ -1,65 +1,60 @@
-import sqlite3
+@app.route("/registro", methods=["GET", "POST"])
+def registro():
 
-DB_NAME = "jarbas.db"
+    if request.method == "POST":
 
-# ===============================
-# CONECTAR BANCO
-# ===============================
+        try:
 
-def conectar():
-    return sqlite3.connect(DB_NAME)
+            print("CADASTRO RECEBIDO")
+            print(request.form)
 
-# ===============================
-# CRIAR TABELAS
-# ===============================
+            nome = request.form.get("nome", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            senha = request.form.get("senha", "")
+            confirmar = request.form.get("confirmar", "")
 
-def criar_tabela():
+            if not nome or not email or not senha:
+                flash("Preencha todos os campos")
+                return redirect(url_for("registro"))
 
-    conn = conectar()
-    cursor = conn.cursor()
+            if senha != confirmar:
+                flash("As senhas não coincidem")
+                return redirect(url_for("registro"))
 
-    # ===============================
-    # USUÁRIOS
-    # ===============================
+            senha_hash = generate_password_hash(senha)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
+            conn = conectar()
+            cursor = conn.cursor()
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cursor.execute(
+                """
+                INSERT INTO users
+                (nome, email, senha)
+                VALUES (?, ?, ?)
+                """,
+                (nome, email, senha_hash)
+            )
 
-        nome TEXT NOT NULL,
+            conn.commit()
+            conn.close()
 
-        email TEXT NOT NULL UNIQUE,
+            print("USUÁRIO CRIADO COM SUCESSO")
 
-        senha TEXT NOT NULL,
+            flash("Conta criada com sucesso!")
+            return redirect(url_for("login"))
 
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        except sqlite3.IntegrityError as e:
 
-    )
-    """)
+            print("EMAIL JÁ EXISTE:", e)
 
-    # ===============================
-    # HISTÓRICO FUTURO (JARBAS)
-    # ===============================
+            flash("Este email já está cadastrado")
+            return redirect(url_for("registro"))
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS historico (
+        except Exception as e:
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+            print("ERRO NO CADASTRO:", e)
 
-        usuario_id INTEGER,
+            flash(f"Erro: {e}")
+            return redirect(url_for("registro"))
 
-        pergunta TEXT,
-
-        resposta TEXT,
-
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (usuario_id)
-        REFERENCES users(id)
-
-    )
-    """)
-
-    conn.commit()
-    conn.close()
+    return render_template("registro.html")
