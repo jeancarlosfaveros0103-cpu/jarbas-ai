@@ -2,8 +2,16 @@ import sqlite3
 
 DB_NAME = "jarbas.db"
 
+# ===============================
+# CONECTAR AO BANCO
+# ===============================
+
 def conectar():
     return sqlite3.connect(DB_NAME)
+
+# ===============================
+# CRIAR TABELAS
+# ===============================
 
 def criar_tabela():
     conn = conectar()
@@ -20,60 +28,74 @@ def criar_tabela():
 
     conn.commit()
     conn.close()
-    if request.method == "POST":
 
-        try:
+# ===============================
+# ADICIONAR USUÁRIO
+# ===============================
 
-            print("CADASTRO RECEBIDO")
-            print(request.form)
+def adicionar_usuario(nome, email, senha):
+    conn = conectar()
+    cursor = conn.cursor()
 
-            nome = request.form.get("nome", "").strip()
-            email = request.form.get("email", "").strip().lower()
-            senha = request.form.get("senha", "")
-            confirmar = request.form.get("confirmar", "")
+    cursor.execute(
+        """
+        INSERT INTO usuarios
+        (nome, email, senha)
+        VALUES (?, ?, ?)
+        """,
+        (nome, email, senha)
+    )
 
-            if not nome or not email or not senha:
-                flash("Preencha todos os campos")
-                return redirect(url_for("registro"))
+    conn.commit()
+    conn.close()
 
-            if senha != confirmar:
-                flash("As senhas não coincidem")
-                return redirect(url_for("registro"))
+# ===============================
+# BUSCAR USUÁRIO POR EMAIL
+# ===============================
 
-            senha_hash = generate_password_hash(senha)
+def buscar_usuario(email):
+    conn = conectar()
+    cursor = conn.cursor()
 
-            conn = conectar()
-            cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM usuarios WHERE email = ?",
+        (email,)
+    )
 
-            cursor.execute(
-                """
-                INSERT INTO users
-                (nome, email, senha)
-                VALUES (?, ?, ?)
-                """,
-                (nome, email, senha_hash)
-            )
+    usuario = cursor.fetchone()
 
-            conn.commit()
-            conn.close()
+    conn.close()
 
-            print("USUÁRIO CRIADO COM SUCESSO")
+    return usuario
 
-            flash("Conta criada com sucesso!")
-            return redirect(url_for("login"))
+# ===============================
+# LISTAR USUÁRIOS
+# ===============================
 
-        except sqlite3.IntegrityError as e:
+def listar_usuarios():
+    conn = conectar()
+    cursor = conn.cursor()
 
-            print("EMAIL JÁ EXISTE:", e)
+    cursor.execute("SELECT * FROM usuarios")
 
-            flash("Este email já está cadastrado")
-            return redirect(url_for("registro"))
+    usuarios = cursor.fetchall()
 
-        except Exception as e:
+    conn.close()
 
-            print("ERRO NO CADASTRO:", e)
+    return usuarios
 
-            flash(f"Erro: {e}")
-            return redirect(url_for("registro"))
+# ===============================
+# DELETAR USUÁRIO
+# ===============================
 
-    return render_template("registro.html")
+def deletar_usuario(usuario_id):
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM usuarios WHERE id = ?",
+        (usuario_id,)
+    )
+
+    conn.commit()
+    conn.close()
