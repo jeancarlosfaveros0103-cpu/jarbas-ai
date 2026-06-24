@@ -1,50 +1,205 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jarbas AI - Login</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body><div id="container"><div id="orb-container">
-    <div class="wave"></div>
-    <div class="wave"></div>
-    <div class="wave"></div>
-    <div id="orb"></div>
-</div>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<h1>JARBAS.AI</h1>
+<title>Login - Jarbas AI</title>
 
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<form method="POST" style="width:90%;max-width:380px;display:flex;flex-direction:column;gap:10px;">
+<style>
 
-    <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        required>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
 
-    <input
-        type="password"
-        name="senha"
-        placeholder="Senha"
-        required>
+body{
+    background:#f5f5ff;
+    min-height:100vh;
+}
 
-    <button type="submit">
-        Entrar
-    </button>
+.topbar{
+    background:linear-gradient(90deg,#7b2ff7,#9d4edd);
+    color:white;
+    padding:20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
 
-</form>
+.logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:28px;
+    font-weight:bold;
+}
 
-<a href="/registro" style="color:#6ecbff;text-decoration:none;">
-    Criar conta
-</a>
+.logo i{
+    font-size:32px;
+}
 
-</div></body>
-</html>
+.voltar{
+    color:white;
+    text-decoration:none;
+    font-size:16px;
+}
+
+.container{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    padding:40px 20px;
+}
+
+.card{
+    background:white;
+    width:100%;
+    max-width:650px;
+    border-radius:20px;
+    padding:40px;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.title{
+    text-align:center;
+    font-size:52px;
+    margin-bottom:10px;
+}
+
+.title span{
+    color:#7b2ff7;
+}
+
+.subtitle{
+    text-align:center;
+    color:#666;
+    margin-bottom:35px;
+}
+
+.label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:600;
+}
+
+.input-group{
+    position:relative;
+    margin-bottom:25px;
+}
+
+.input-group input{
+    width:100%;
+    padding:15px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    font-size:16px;
+}
+
+.eye{
+    position:absolute;
+    right:15px;
+    top:15px;
+    color:#777;
+    cursor:pointer;
+}
+
+.forgot{
+    text-align:right;
+    margin-bottom:20px;
+}
+
+.forgot a{
+    text-decoration:none;
+    color:#7b2ff7;
+    font-weight:600;
+}
+
+.btn{
+    width:100%;
+    background:linear-gradient(90deg,#7b2ff7,#9d4edd);
+    color:white;
+    border:none;
+    padding:16px;
+    border-radius:10px;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.divider{
+    text-align:center;
+    margin:25px 0;
+    color:#777;
+    position:relative;
+}
+
+.divider::before,
+.divider::after{
+    content:'';
+    position:absolute;
+    width:40%;
+    height:1px;
+    background:#ddd;
+    top:50%;
+}
+
+.divider::before{
+    left:0;
+}
+
+.divider::after{
+    right:0;
+}
+
+.google-btn{
+    width:100%;
+    padding:15px;
+    background:white;
+    border:2px solid #ddd;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:17px;
+}
+
+.google-btn i{
+    color:#ea4335;
+    margin-right:10px;
+}
+
+.register{
+    text-align:center;
+    margin-top:20px;
+}
+
+.register a{
+    color:#7b2ff7;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.security{
+    margin-top:25px;
+    background:#f7f0ff;
+    padding:20px;
+    border-radius:15px;
+    display:flex;
+    gap:15px;
+    align-items:flex-start;
+}
+
+.security i{
+    color:#7b2ff7;
+    font-size:25px;
+}
+
+.security h4{
+    color:#5a189a;
+    margin-bottom:5px;
+}
+
+.security p
