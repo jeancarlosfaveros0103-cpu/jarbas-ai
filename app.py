@@ -71,7 +71,7 @@ def login():
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT id, nome, senha FROM users WHERE email = ?",
+            "SELECT id, nome, senha FROM usuarios WHERE email = ?",
             (email,)
         )
 
