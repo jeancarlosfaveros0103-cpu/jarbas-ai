@@ -139,7 +139,7 @@ def registro():
             cursor = conn.cursor()
 
             cursor.execute("""
-            INSERT INTO users
+            INSERT INTO usuarios
             (nome, email, senha)
             VALUES (?, ?, ?)
             """, (
